@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>CodeGrind OS</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="desktop">
+        <!-- Боковая панель с иконками -->
+        <div class="icon-panel">
+            <div class="icon" onclick="AppManager.open('notepad')">
+                <img src="icons/notepad.png" alt="Блокнот">
+                <div>Блокнот</div>
+            </div>
+            <div class="icon" onclick="AppManager.open('browser')">
+                <img src="icons/browser.png" alt="Браузер">
+                <div>Браузер</div>
+            </div>
+
+            <div class="icon" onclick="AppManager.open('console')">
+                <img src="icons/console.png" alt="Консоль">
+                <div>Консоль</div>
+            </div>
+
+
+            <div class="icon" onclick="AppManager.open('wallet')">
+                <img src="icons/wallet.png" alt="Кошелёк">
+                <div>Кошелёк</div>
+            </div>
+
+
+        </div>
+
+        <!-- Окно блокнота -->
+        <div id="notepad" class="window">
+            <div class="window-header">
+                <span id="notepad-title">Блокнот - новый файл</span>
+                <button class="close-btn" onclick="AppManager.close('notepad')">X</button>
+            </div>
+            <div class="window-toolbar">
+                <button onclick="Notepad.newFile()">Новый файл</button>
+                <button onclick="Notepad.save()">Сохранить (Ctrl+S)</button>
+                <button onclick="Notepad.saveAs()">Сохранить как...</button>
+                <button onclick="Notepad.open()">Открыть</button>
+                <button onclick="TaskSystem.submitSolution()" id="submit-task-btn" style="display:none;">
+                    Проверить задание
+                </button>
+            </div>
+            <textarea id="code-editor"></textarea>
+        </div>
+
+        <div id="console" class="window">
+            <div class="window-header">
+                <span>Консоль</span>
+                <button class="close-btn" onclick="AppManager.close('console')">X</button>
+            </div>
+            <div class="console-output" id="console-output"></div>
+            <div class="console-input">
+                <input type="text" id="console-cmd" placeholder="Введите команду (например: run test.gs)...">
+                <button onclick="Console.executeCommand()">▶</button>
+            </div>
+        </div>
+
+        <!-- Окно браузера -->
+        <div id="browser" class="window">
+            <div class="window-header">
+                <span>Браузер</span>
+                <button class="close-btn" onclick="AppManager.close('browser')">X</button>
+            </div>
+            <div class="tabs">
+                <button onclick="TabManager.show('shop')">Магазин</button>
+                <button onclick="TabManager.show('freelance')">Фриланс</button>
+                <button onclick="TabManager.show('docs')">Справочник</button>
+            </div>
+
+            <!-- Вкладка магазина -->
+            <div id="shop" class="tab-content">
+                <h3>ByteMarket</h3>
+                <p>Баланс: <span id="ram-coins">100</span> RAM</p>
+                <div class="item" data-item-id="syntax_highlight" onclick="Shop.buy('syntax_highlight')">
+                    <h4>Подсветка синтаксиса</h4>
+                    <p>100 RAM-коинов</p>
+                </div>
+                <div class="item" data-item-id="debugger" onclick="Shop.buy('debugger')">
+                    <h4>Отладчик</h4>
+                    <p>200 RAM-коинов</p>
+                </div>
+            </div>
+
+            <!-- Вкладка фриланса -->
+            <div id="freelance" class="tab-content" style="display:none;">
+                <h3>CodeGig</h3>
+                <div class="task" data-task-id="1" onclick="TaskSystem.start(1)">
+                    <h4>Сложи два числа</h4>
+                    <p>Напиши функцию add(a, b). Награда: 50 RAM.</p>
+                </div>
+                <div class="task" data-task-id="2" onclick="TaskSystem.start(2)">
+                    <h4>Проверка на чётность</h4>
+                    <p>Напиши функцию isEven(n). Награда: 80 RAM.</p>
+                </div>
+            </div>
+
+            <!-- Вкладка справочника (добавлена внутрь окна браузера) -->
+            <div id="docs" class="tab-content" style="display:none;">
+                <h2>GrindScript Справочник</h2>
+                <div class="doc-search">
+                    <input type="text" id="doc-search" placeholder="Поиск по документации...">
+                    <button onclick="Documentation.search(document.getElementById('doc-search').value)">
+                        Найти
+                    </button>
+                </div>
+                <div class="doc-menu">
+                    <div onclick="Documentation.show('basics')">Основы</div>
+                    <div onclick="Documentation.show('variables')">Переменные</div>
+                    <div onclick="Documentation.show('operators')">Операторы</div>
+                    <div onclick="Documentation.show('conditions')">Условия</div>
+                    <div onclick="Documentation.show('loops')">Циклы</div>
+                    <div onclick="Documentation.show('examples')">Примеры</div>
+                    <div onclick="Documentation.show('errors')">Ошибки</div>
+                    <div onclick="Documentation.show('io')">Ввод/Вывод</div>
+                </div>
+                <div id="doc-content"></div>
+            </div>
+        </div>
+
+        <!-- Окно кошелька -->
+        <div id="wallet" class="window">
+            <div class="window-header">
+                <span>Кошелёк</span>
+                <button class="close-btn" onclick="AppManager.close('wallet')">X</button>
+            </div>
+            <div class="wallet-content">
+                <div class="balance-section">
+                    <h3>Ваш баланс</h3>
+                    <div class="balance-amount">
+                        <img src="icons/ram-coin.png" alt="RAM-коины" width="24">
+                        <span id="wallet-balance">100</span> RAM
+                    </div>
+                </div>
+
+                <div class="earn-section">
+                    <h3>Заработать RAM</h3>
+                    <button class="earn-btn" onclick="Wallet.watchAd()">
+                        Посмотреть рекламу (+50 RAM)
+                    </button>
+                    <p class="or-divider">или</p>
+                    <button class="yandex-btn" onclick="Wallet.buyCoins(100)">
+                        Купить 100 RAM за 10 ₽
+                    </button>
+                    <button class="yandex-btn" onclick="Wallet.buyCoins(250)">
+                        Купить 250 RAM за 20 ₽
+                    </button>
+                    <button class="yandex-btn" onclick="Wallet.buyCoins(600)">
+                        Купить 600 RAM за 50 ₽
+                    </button>
+                </div>
+
+                <div class="transaction-history">
+                    <h3>История операций</h3>
+                    <div id="transactions-list">
+                        <!-- Транзакции будут добавляться здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <!-- Модальные окна -->
+    <div id="os-modal" class="os-modal">
+        <div class="os-modal-content">
+            <div class="os-modal-header">
+                <span id="os-modal-title">Сообщение системы</span>
+                <button class="close-btn" onclick="Modal.close()">X</button>
+            </div>
+            <div class="os-modal-body" id="os-modal-text">
+                Текст сообщения
+            </div>
+            <div class="os-modal-footer">
+                <button onclick="Modal.close()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="save-modal" class="os-modal">
+        <div class="os-modal-content">
+            <div class="os-modal-header">
+                <span>Сохранить файл</span>
+                <button class="close-btn" onclick="Modal.close()">X</button>
+            </div>
+            <div class="os-modal-body">
+                <input type="text" id="filename-input" placeholder="имя_файла.gs" value="новый_файл.gs">
+            </div>
+            <div class="os-modal-footer">
+                <button onclick="Notepad.confirmSave()">Сохранить</button>
+                <button onclick="Modal.close()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Контекстное меню -->
+    <div id="context-menu" class="context-menu">
+        <div class="context-item" onclick="FileManager.openSelected()">Открыть</div>
+        <div class="context-item" onclick="FileManager.renameSelected()">Переименовать</div>
+        <div class="context-item" onclick="FileManager.deleteSelected()">Удалить</div>
+    </div>
+
+    <script src="js/grindscript/api.js"></script>
+    <script src="js/grindscript/lexer.js"></script>
+    <script src="js/grindscript/parser.js"></script>
+    <script src="js/grindscript/vm.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
