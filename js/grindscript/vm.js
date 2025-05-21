@@ -117,6 +117,9 @@ class GrindVM {
             case 'Literal':
                 return node.value;
             case 'Identifier':
+                if (!(node.name in this.variables)) {
+                    throw new GrindError(`Переменная '${node.name}' не объявлена.`, null);
+                }
                 return this.variables[node.name];
             case 'ArrayLiteral':
                 const elements = [];

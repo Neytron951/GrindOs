@@ -12,20 +12,17 @@ class GrindParser {
         try {
             while (this.position < this.tokens.length) {
                 const statement = this.parseStatement();
-                if (statement) { // Добавлена проверка на null
-                  program.body.push(statement);
-                  console.log("PARSER: Добавлено выражение:", statement);
+                if (statement) {
+                    program.body.push(statement);
+                    console.log("PARSER: Добавлено выражение:", statement);
                 } else {
-                  //console.warn("PARSER: Пропуск пустой инструкции (возможно, точка с запятой)");
-                  // Обработка случая, когда parseStatement() возвращает null.  Например, это может произойти,
-                  // если в конце файла стоит точка с запятой. Или при ошибке в parseStatement.
-                  this.position++; // Пропускаем токен
+                    this.position++;
                 }
             }
         } catch (error) {
             console.error("PARSER: Ошибка при разборе:", error);
             console.error("PARSER: Stack trace:", error.stack);
-            return { type: 'Program', body: [] }; //  Возвращаем "пустую" программу или обрабатываем ошибку по-другому
+            throw error; // Бросаем ошибку дальше!
         }
 
         console.log("PARSER: Результат разбора:", program);
@@ -33,10 +30,7 @@ class GrindParser {
     }
 
     parseStatement() {
-
         try {
-
-
             const token = this.tokens[this.position];
             console.log("PARSER: Разбор выражения, текущий токен:", token); // Отладка
 
@@ -60,17 +54,25 @@ class GrindParser {
                         case 'return':
                             return this.parseReturnStatement();
                         default:
-                            throw new Error(`Неизвестное ключевое слово: ${token.value}`);
+                            throw new GrindError(
+                                `Неизвестное ключевое слово: "${token.value}". Проверьте синтаксис.`,
+                                this.position
+                            );
                     }
                 default:
                     return this.parseExpressionStatement();
-
             }
         } catch (error) {
+            if (!(error instanceof GrindError)) {
+                error = new GrindError(
+                    `Синтаксическая ошибка: ${error.message}`,
+                    this.position
+                );
+            }
             console.error("PARSER: Ошибка при разборе выражения:", error);
             console.error("PARSER: Stack trace:", error.stack);
-            this.position++; // Пропускаем токен, чтобы избежать зацикливания (возможно, не лучший вариант, зависит от логики)
-            return null; // Или обработать ошибку другим способом.
+            this.position++; // Пропускаем токен, чтобы избежать зацикливания
+            return null;
         }
     }
 
@@ -175,7 +177,6 @@ class GrindParser {
 
     parseExpressionStatement() {
         const expression = this.parseExpression();
-        // Добавить проверку на существование точки с запятой
         if (this.tokens[this.position]?.value === ';') {
             this.expect('PUNCTUATION', ';');
         }
@@ -222,6 +223,14 @@ class GrindParser {
     parsePrimary() {
         const token = this.tokens[this.position];
         console.log("PARSER: Разбор первичного выражения, токен:", token); // Отладка
+
+        if (!token) {
+            throw new GrindError(
+                "Неожиданный конец программы. Возможно, забыта закрывающая скобка или точка с запятой.",
+                this.position
+            );
+        }
+
         this.position++;
 
         switch (token.type) {
@@ -256,26 +265,47 @@ class GrindParser {
                     console.log("PARSER: Создан массив:", arrayLiteral); // Отладка
                     return arrayLiteral;
                 }
+                // Если встретили пунктуацию, которую не ожидали
+                throw new GrindError(
+                    `Неожиданный символ "${token.value}". Возможно, опечатка или ошибка в расстановке скобок.`,
+                    this.position
+                );
             default:
-                throw new Error(`Неожиданный токен: ${token.value}`);
+                throw new GrindError(
+                    `Неожиданный токен "${token.value}". Проверьте синтаксис — возможно, ошибка или опечатка.`,
+                    this.position
+                );
         }
     }
 
     expect(type, value) {
-      try {
-        const token = this.tokens[this.position];
-        console.log(`Expecting: ${type}='${value}', Current:`, token);
+        try {
+            const token = this.tokens[this.position];
+            console.log(`Expecting: ${type}='${value}', Current:`, token);
 
-        if (!token) throw new Error(`Unexpected end of input, expected ${type}`);
-        if (token.type !== type) throw new Error(`Expected ${type} but got ${token.type} (${token.value})`);
-        if (value && token.value !== value) throw new Error(`Expected '${value}' but got '${token.value}'`);
-
-        this.position++;
-        return token;
-      } catch (error) {
-        console.error("PARSER: Ошибка в expect:", error);
-        console.error("PARSER: Stack trace:", error.stack);
-        throw error; // Перебрасываем ошибку, чтобы она была обработана в вызывающем коде
-      }
+            if (!token)
+                throw new GrindError(
+                    `Неожиданный конец программы. Ожидался "${value || type}". Возможно, забыта точка с запятой или закрывающая скобка.`,
+                    this.position
+                );
+            if (token.type !== type)
+                throw new GrindError(
+                    `Синтаксическая ошибка: ожидался тип "${type}", а встретился "${token.type}" ("${token.value}").`,
+                    this.position
+                );
+            if (value && token.value !== value)
+                throw new GrindError(
+                    `Синтаксическая ошибка: ожидался символ "${value}", а встретился "${token.value}". Возможно, опечатка или забыта запятая.`,
+                    this.position
+                );
+            this.position++;
+            return token;
+        } catch (error) {
+            if (!(error instanceof GrindError)) {
+                error = new GrindError("Синтаксическая ошибка: " + error.message, this.position);
+            }
+            console.error("PARSER: Ошибка в expect:", error);
+            throw error;
+        }
     }
 }

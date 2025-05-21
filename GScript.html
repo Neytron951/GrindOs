@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>GrindScript Test Polygon</title>
+    <style>
+        body { background: #222; color: #0f0; font-family: monospace; }
+        textarea { width: 90%; height: 120px; background: #111; color: #0f0; }
+        button { margin: 10px 0; padding: 5px 20px; }
+        pre { background: #111; color: #0f0; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h2>GrindScript Sandbox</h2>
+    <textarea id="code">// Пиши свой код здесь</textarea><br>
+    <button onclick="runGScript()">Запустить</button>
+    <pre id="output"></pre>
+
+    <script src="js/grindscript/error.js"></script>
+    <script src="js/grindscript/lexer.js"></script>
+    <script src="js/grindscript/parser.js"></script>
+    <script src="js/grindscript/vm.js"></script>
+    <script src="js/grindscript/api.js"></script>
+    <script>
+        function runGScript() {
+            const code = document.getElementById('code').value;
+            const output = document.getElementById('output');
+            output.textContent = '';
+            try {
+                const lexer = new GrindLexer();
+                const tokens = lexer.tokenize(code);
+
+                const parser = new GrindParser(tokens);
+                const ast = parser.parse();
+
+                const vm = new GrindVM(GrindAPI);
+                let outputLines = [];
+                vm.setOutputHandler(text => outputLines.push(text));
+                vm.execute(ast);
+
+                output.textContent = outputLines.join('\n');
+            } catch (e) {
+                if (e instanceof GrindError) {
+                    output.textContent = e.message + '\n' + GrindError.format(code, e.pos);
+                } else if (e instanceof Error) {
+                    output.textContent = "Ошибка: " + e.message + '\n' + e.stack;
+                } else {
+                    output.textContent = "Неизвестная ошибка: " + JSON.stringify(e);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

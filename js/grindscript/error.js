@@ -1,23 +1,21 @@
-class GrindError extends Error {
+window.GrindError = class GrindError extends Error {
     constructor(message, pos) {
         super(`GrindScript Error: ${message}`);
+        this.name = "GrindError";
         this.pos = pos;
     }
-
     static format(code, pos) {
+        if (typeof code !== "string" || typeof pos !== "number") return "";
         const lines = code.split('\n');
-        let lineNum = 0;
-        let lineStart = 0;
-
+        let total = 0;
         for (let i = 0; i < lines.length; i++) {
-            const lineEnd = lineStart + lines[i].length;
-            if (pos >= lineStart && pos <= lineEnd) {
-                lineNum = i + 1;
-                break;
+            const lineLength = lines[i].length + 1;
+            if (pos < total + lineLength) {
+                const col = pos - total;
+                return `Строка ${i + 1}: ${lines[i]}\n${' '.repeat(col)}^`;
             }
-            lineStart = lineEnd + 1;
+            total += lineLength;
         }
-
-        return `Строка ${lineNum}: ${lines[lineNum-1]}\n${' '.repeat(pos - lineStart)}^`;
+        return `Строка ${lines.length}: ${lines[lines.length - 1]}\n${' '.repeat(lines[lines.length - 1]?.length || 0)}^`;
     }
 }

@@ -51,8 +51,7 @@ const GameConfig = {
             title: "🟢 Основы GrindScript",
             content: `
                 <h3>Структура программы</h3>
-                <p>Программа состоит из последовательности инструкций. Каждая инструкция должна заканчиваться точкой с запятой.</p>
-
+                <p>Программа состоит из последовательности инструкций. Каждая инструкция должна заканчиваться точкой с запятой <code>;</code>.</p>
                 <h3>Типы данных</h3>
                 <div class="code-block">
                 <code>int</code> - целые числа (42)<br>
@@ -67,10 +66,9 @@ const GameConfig = {
             content: `
                 <h3>Объявление переменных</h3>
                 <pre>int age = 25;
-    float price = 9.99;
-    str name = "Алексей";
-    bool isActive = true;</pre>
-
+float price = 9.99;
+str name = "Алексей";
+bool isActive = true;</pre>
                 <h3>Правила именования</h3>
                 <ul>
                     <li>Могут содержать буквы, цифры и _</li>
@@ -87,11 +85,9 @@ const GameConfig = {
                 <pre>int[] numbers = [1, 2, 3];
 str[] names = ["Аня", "Петя"];
 float[] prices = [1.99, 2.50, 9.99];</pre>
-
                 <h3>Доступ к элементам</h3>
                 <pre>print(numbers[0]);  // Первый элемент
 numbers[1] = 42;    // Изменение элемента</pre>
-
                 <h3>Особенности</h3>
                 <ul>
                     <li>Индексация с 0</li>
@@ -101,14 +97,13 @@ numbers[1] = 42;    // Изменение элемента</pre>
             `
         },
 
-
         io: {
             title: "📤 Ввод/Вывод",
             content: `
                 <h3>Вывод данных</h3>
                 <pre>print("Hello World!");  // Вывод текста
-    print(42);           // Вывод числа
-    print(x);            // Вывод переменной</pre>
+print(42);           // Вывод числа
+print(x);            // Вывод переменной</pre>
             `
         },
         operators: {
@@ -116,10 +111,8 @@ numbers[1] = 42;    // Изменение элемента</pre>
             content: `
                 <h3>Арифметические</h3>
                 <pre>+  -  *  /  %  ++  --</pre>
-
                 <h3>Сравнения</h3>
                 <pre>==  !=  >  <  >=  <=</pre>
-
                 <h3>Логические</h3>
                 <pre>&&  ||  !</pre>
             `
@@ -129,15 +122,14 @@ numbers[1] = 42;    // Изменение элемента</pre>
             content: `
                 <h3>if-else (блоки)</h3>
                 <pre>if (x > 10) {
-        print("Больше 10");
-    } else {
-        print("Меньше или равно 10");
-    }</pre>
-
+    print("Больше 10");
+} else {
+    print("Меньше или равно 10");
+}</pre>
                 <h3>Логические выражения</h3>
                 <pre>if (x > 5 && x < 10) {
-        print("Между 5 и 10");
-    }</pre>
+    print("Между 5 и 10");
+}</pre>
             `
         },
         loops: {
@@ -145,15 +137,14 @@ numbers[1] = 42;    // Изменение элемента</pre>
             content: `
                 <h3>Цикл for</h3>
                 <pre>for (int i = 0; i < 5; i++) {
-        print(i);
-    }</pre>
-
+    print(i);
+}</pre>
                 <h3>Цикл while</h3>
                 <pre>int i = 0;
-    while (i < 5) {
-        print(i);
-        i++;
-    }</pre>
+while (i < 5) {
+    print(i);
+    i++;
+}</pre>
             `
         },
         examples: {
@@ -161,17 +152,16 @@ numbers[1] = 42;    // Изменение элемента</pre>
             content: `
                 <h3>Сумма чисел</h3>
                 <pre>int sum = 0;
-    for (int i = 1; i <= 10; i++) {
-        sum += i;
-    }
-    print("Сумма: " + sum);</pre>
-
+for (int i = 1; i <= 10; i++) {
+    sum += i;
+}
+print("Сумма: " + sum);</pre>
                 <h3>Факториал (итеративный)</h3>
                 <pre>int factorial = 1;
-    for (int i = 1; i <= 5; i++) {
-        factorial *= i;
-    }
-    print(factorial); // 120</pre>
+for (int i = 1; i <= 5; i++) {
+    factorial *= i;
+}
+print(factorial); // 120</pre>
             `
         },
         errors: {
@@ -255,8 +245,6 @@ const GameState = {
     }
 };
 
-
-
 const Documentation = {
     show(section) {
         const doc = GameConfig.docs[section];
@@ -297,11 +285,9 @@ const Documentation = {
     }
 };
 
-
-
 // ===== КОНСОЛЬ =====
 const Console = {
-    activeInputPromise: null, // Добавлено: Promise для обработки ввода
+    activeInputPromise: null, // Для обработки ввода
     init() {
         // Создаем экземпляр GrindVM с API при инициализации консоли
         this.vm = new GrindVM(GrindAPI);
@@ -319,7 +305,7 @@ const Console = {
                     Console.activeInputPromise.resolve(inputValue);
                     Console.activeInputPromise = null;
                 } else {
-                    await Console.executeCommand(); // Добавлен await
+                    await Console.executeCommand();
                 }
             }
         });
@@ -332,7 +318,7 @@ const Console = {
     getInputValue() {
         const inputElement = document.getElementById('console-cmd');
         const value = inputElement.value;
-        console.log("getInputValue:", value); // Добавлено
+        console.log("getInputValue:", value);
         return value;
     },
 
@@ -346,7 +332,6 @@ const Console = {
 
         this.print(`> ${cmd}`, 'input');
 
-        // Обработка специальных команд
         if (cmd === 'clear') {
             this.clear();
             return;
@@ -369,9 +354,9 @@ const Console = {
 
         // Выполнение кода
         try {
-            await this.executeGrindScript(cmd); // Добавлен await
+            await this.executeGrindScript(cmd);
         } catch (e) {
-            this.print(`Ошибка: ${e.message}`, 'error');
+            this.handleError(e, cmd);
         }
     },
 
@@ -379,11 +364,11 @@ const Console = {
         try {
             const lexer = new GrindLexer();
             const tokens = lexer.tokenize(code);
-            console.log("LEXER Tokens:", tokens); // Логируем токены
+            console.log("LEXER Tokens:", tokens);
 
             const parser = new GrindParser(tokens);
             const ast = parser.parse();
-            console.log("PARSER AST:", ast); // Логируем AST
+            console.log("PARSER AST:", ast);
 
             const vm = new GrindVM(GrindAPI);
             vm.setOutputHandler((text) => this.print(text, 'output'));
@@ -391,32 +376,40 @@ const Console = {
             const result = await vm.execute(ast);
             if (result) this.print(result, 'output');
         } catch (e) {
-            console.error("FULL ERROR:", e.stack); // Выводим полный стек ошибки
-            this.print(`Ошибка выполнения: ${e.message}`, 'error');
+            this.handleError(e, code);
         }
     },
 
+    handleError(e, code) {
+        if (e instanceof GrindError) {
+            this.print(e.message, 'error');
+            if (e.pos !== undefined && typeof code === 'string') {
+                this.print(GrindError.format(code, e.pos), 'error');
+            }
+        } else if (e instanceof Error) {
+            this.print("Ошибка: " + e.message, 'error');
+            this.print(e.stack, 'error');
+        } else {
+            this.print("Неизвестная ошибка: " + JSON.stringify(e), 'error');
+        }
+    },
 
     runScript(filename) {
-        // Добавляем проверку на undefined и null
         if (typeof filename !== 'string') {
             this.print(`Ошибка: Не указано имя файла`, 'error');
             return;
         }
 
-        // Добавляем базовое расширение, даже если filename пустой
         let finalFilename = filename.trim();
         if (finalFilename === '') {
             this.print(`Ошибка: Пустое имя файла`, 'error');
             return;
         }
 
-        // Добавляем расширение .gs если его нет
         if (!finalFilename.endsWith('.gs')) {
             finalFilename += '.gs';
         }
 
-        // Проверяем существование файла
         if (!Notepad.files[finalFilename]) {
             this.print(`Ошибка: Файл "${finalFilename}" не найден`, 'error');
             return;
@@ -426,7 +419,7 @@ const Console = {
             this.print(`> Запуск ${finalFilename}...`, 'system');
             this.executeGrindScript(Notepad.files[finalFilename]);
         } catch (e) {
-            this.print(`Ошибка: ${e.message}`, 'error');
+            this.handleError(e, Notepad.files[finalFilename]);
         }
     },
 
@@ -454,9 +447,6 @@ const Console = {
     }
 };
 
-
-
-
 const TaskSystem = {
     start(taskId) {
         const task = GameConfig.tasks[taskId];
@@ -477,19 +467,15 @@ const TaskSystem = {
         const code = document.getElementById('code-editor').value;
 
         try {
-            // Создаём изолированную VM для проверки
             const testVM = new GrindVM();
             const testOutput = [];
             testVM.setOutputHandler(text => testOutput.push(text));
 
-            // Выполняем код игрока
             const lexer = new GrindLexer();
             const parser = new GrindParser(lexer.tokenize(code));
             testVM.execute(parser.parse());
 
-            // Проверяем решение (пример для задачи сложения)
             if (taskId === '1') {
-                // Проверяем функцию add(a, b)
                 if (testVM.variables.add &&
                     typeof testVM.variables.add.value === 'function') {
                     const add = testVM.variables.add.value;
@@ -500,7 +486,7 @@ const TaskSystem = {
 
             return false;
         } catch (e) {
-            Console.print(`Ошибка проверки: ${e.message}`, 'error');
+            Console.handleError(e, code);
             return false;
         }
     },
@@ -508,7 +494,7 @@ const TaskSystem = {
     submitSolution() {
         if (this.checkSolution()) {
             Wallet.addCoins(GameConfig.tasks[GameState.currentTask].reward,
-                          `Задание ${GameState.currentTask}`);
+                            `Задание ${GameState.currentTask}`);
             Modal.open('Успех', 'Задание выполнено правильно!');
             GameConfig.tasks[GameState.currentTask].completed = true;
         } else {
@@ -517,8 +503,6 @@ const TaskSystem = {
     }
 };
 
-
-// ===== МОДАЛЬНЫЕ ОКНА =====
 const Modal = {
     open(title, message, callback = null) {
         document.getElementById('os-modal-title').textContent = title;
@@ -571,7 +555,6 @@ const Modal = {
     }
 };
 
-// ===== ФАЙЛОВЫЙ МЕНЕДЖЕР =====
 const FileManager = {
     selectedFile: null,
 
@@ -616,7 +599,7 @@ const FileManager = {
 
     openFile(filename) {
         Notepad.openFile(filename);
-        AppManager.open('notepad'); // Добавляем принудительное открытие блокнота
+        AppManager.open('notepad');
     },
 
     openSelected() {
@@ -680,7 +663,6 @@ const FileManager = {
     }
 };
 
-// ===== БЛОКНОТ =====
 const Notepad = {
     currentFile: null,
     files: {},
@@ -696,7 +678,6 @@ const Notepad = {
             }
         });
     },
-
 
     newFile() {
         if (this.currentFile && document.getElementById('code-editor').value !== this.files[this.currentFile]) {
@@ -821,12 +802,6 @@ const Notepad = {
         }
     },
 
-    newFile() {
-        this.currentFile = null;
-        document.getElementById('code-editor').value = '';
-        document.getElementById('notepad-title').textContent = 'Блокнот - новый файл';
-    },
-
     loadFile(filename) {
         if (!this.files[filename]) {
             Modal.open('Ошибка', 'Файл не найден!');
@@ -839,7 +814,6 @@ const Notepad = {
     }
 };
 
-// ===== УПРАВЛЕНИЕ ПРИЛОЖЕНИЯМИ =====
 const AppManager = {
     open(appId) {
         if (!GameState.unlockedApps.includes(appId)) {
@@ -874,7 +848,6 @@ const AppManager = {
     }
 };
 
-// ===== УПРАВЛЕНИЕ ВКЛАДКАМИ =====
 const TabManager = {
     show(tabId) {
         document.querySelectorAll('.tab-content').forEach(tab => {
@@ -883,14 +856,12 @@ const TabManager = {
         const tab = document.getElementById(tabId);
         if (tab) {
             tab.style.display = 'block';
-            // Добавляем класс active для работы документации
             tab.classList.add('active');
         }
         GameState.playSound('click');
     }
 };
 
-// ===== МАГАЗИН =====
 const Shop = {
     buy(itemId) {
         const item = GameConfig.items[itemId];
@@ -936,7 +907,6 @@ const Shop = {
     }
 };
 
-// ===== КОШЕЛЁК =====
 const Wallet = {
     init() {
         this.updateBalance();
@@ -1003,7 +973,6 @@ const Wallet = {
     }
 };
 
-// ===== ПЕРЕТАСКИВАНИЕ ОКОН =====
 const WindowDrag = {
     init() {
         document.querySelectorAll('.window-header').forEach(header => {
@@ -1053,7 +1022,6 @@ document.addEventListener('DOMContentLoaded', () => {
     FileManager.init();
     FileManager.renderDesktopFiles();
 
-    // Только после инициализации всего остального
     Console.init();
 
     document.addEventListener('keydown', (e) => {
@@ -1074,3 +1042,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+// Глобальная обработка ошибок для отладки
+window.addEventListener('unhandledrejection', function(event) {
+    if (Console && typeof Console.print === 'function') {
+        Console.print("Глобальная ошибка (Promise): " + event.reason, 'error');
+    }
+});
+window.addEventListener('error', function(event) {
+    if (Console && typeof Console.print === 'function') {
+        Console.print("Глобальная ошибка (Error): " + event.message, 'error');
+    }
+});
