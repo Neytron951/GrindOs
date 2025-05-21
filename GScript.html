@@ -23,9 +23,10 @@
     <script src="js/grindscript/api.js"></script>
     <script>
         function runGScript() {
+            console.log("RUN SCRIPT");
             const code = document.getElementById('code').value;
             const output = document.getElementById('output');
-            output.textContent = '';
+            output.textContent = 'Функция вызвалась!';
             try {
                 const lexer = new GrindLexer();
                 const tokens = lexer.tokenize(code);
@@ -50,5 +51,15 @@
             }
         }
     </script>
+
+    <script>
+        console.log("Скрипты загружены!");
+        window.runGScript = function() {
+            console.log("RUN SCRIPT!");
+            const output = document.getElementById("output");
+            output.textContent = "RUN SCRIPT!";
+        };
+    </script>
+
 </body>
 </html>
