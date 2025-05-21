@@ -753,7 +753,7 @@ pre {
     content: "🔍 ";
 }
 
-/* Адаптация для маленьких экранов */
+/*Адаптация для маленьких экранов */
 @media (max-width: 600px) {
     .doc-search {
         flex-direction: column;
