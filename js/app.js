@@ -1,185 +1,50 @@
 // ===== КОНФИГУРАЦИЯ ИГРЫ =====
 const GameConfig = {
-    // Основные настройки
-    enableSounds: false,
-    startingRamCoins: 100,
-    adReward: 50,
+  // Основные настройки
+  enableSounds: false,
+  startingRamCoins: 100,
+  adReward: 50,
 
-    // Игровые предметы
-    items: {
-        syntax_highlight: {
-            price: 100,
-            bought: false,
-            description: "Подсветка синтаксиса в редакторе"
-        },
-        debugger: {
-            price: 200,
-            bought: false,
-            description: "Инструменты для отладки кода"
-        }
+  // Игровые предметы
+  items: {
+    syntax_highlight: {
+      price: 100,
+      bought: false,
+      description: "Подсветка синтаксиса в редакторе"
     },
-
-    // Покупка валюты
-    yandexProducts: {
-        100: { price: 10, amount: 100 },
-        250: { price: 20, amount: 250 },
-        600: { price: 50, amount: 600 }
-    },
-
-    // Задания
-    tasks: {
-        1: {
-            description: "Напиши функцию add(a, b), которая возвращает a + b.",
-            solution: "function add(a, b) {\n  return a + b;\n}",
-            reward: 50,
-            completed: false
-        },
-        2: {
-            description: "Напиши функцию isEven(n), которая проверяет, чётное ли число.",
-            solution: "function isEven(n) {\n  return n % 2 === 0;\n}",
-            reward: 80,
-            completed: false
-        }
-    },
-
-    // Доступные приложения
-    startingApps: ['notepad', 'browser', 'wallet', 'console'],
-
-    // Документация по GrindScript
-    docs: {
-        basics: {
-            title: "🟢 Основы GrindScript",
-            content: `
-                <h3>Структура программы</h3>
-                <p>Программа состоит из последовательности инструкций. Каждая инструкция должна заканчиваться точкой с запятой <code>;</code>.</p>
-                <h3>Типы данных</h3>
-                <div class="code-block">
-                <code>int</code> - целые числа (42)<br>
-                <code>float</code> - дробные числа (3.14)<br>
-                <code>str</code> - строки ("Привет")<br>
-                <code>bool</code> - логические значения (true/false)
-                </div>
-            `
-        },
-        variables: {
-            title: "📦 Переменные",
-            content: `
-                <h3>Объявление переменных</h3>
-                <pre>int age = 25;
-float price = 9.99;
-str name = "Алексей";
-bool isActive = true;</pre>
-                <h3>Правила именования</h3>
-                <ul>
-                    <li>Могут содержать буквы, цифры и _</li>
-                    <li>Не могут начинаться с цифры</li>
-                    <li>Чувствительны к регистру</li>
-                </ul>
-            `
-        },
-
-        arrays: {
-            title: "📦 Массивы",
-            content: `
-                <h3>Объявление массивов</h3>
-                <pre>int[] numbers = [1, 2, 3];
-str[] names = ["Аня", "Петя"];
-float[] prices = [1.99, 2.50, 9.99];</pre>
-                <h3>Доступ к элементам</h3>
-                <pre>print(numbers[0]);  // Первый элемент
-numbers[1] = 42;    // Изменение элемента</pre>
-                <h3>Особенности</h3>
-                <ul>
-                    <li>Индексация с 0</li>
-                    <li>Фиксированный размер после инициализации</li>
-                    <li>Строгая проверка типов элементов</li>
-                </ul>
-            `
-        },
-
-        io: {
-            title: "📤 Ввод/Вывод",
-            content: `
-                <h3>Вывод данных</h3>
-                <pre>print("Hello World!");  // Вывод текста
-print(42);           // Вывод числа
-print(x);            // Вывод переменной</pre>
-            `
-        },
-        operators: {
-            title: "🔧 Операторы",
-            content: `
-                <h3>Арифметические</h3>
-                <pre>+  -  *  /  %  ++  --</pre>
-                <h3>Сравнения</h3>
-                <pre>==  !=  >  <  >=  <=</pre>
-                <h3>Логические</h3>
-                <pre>&&  ||  !</pre>
-            `
-        },
-        conditions: {
-            title: "❓ Условия",
-            content: `
-                <h3>if-else (блоки)</h3>
-                <pre>if (x > 10) {
-    print("Больше 10");
-} else {
-    print("Меньше или равно 10");
-}</pre>
-                <h3>Логические выражения</h3>
-                <pre>if (x > 5 && x < 10) {
-    print("Между 5 и 10");
-}</pre>
-            `
-        },
-        loops: {
-            title: "🔄 Циклы",
-            content: `
-                <h3>Цикл for</h3>
-                <pre>for (int i = 0; i < 5; i++) {
-    print(i);
-}</pre>
-                <h3>Цикл while</h3>
-                <pre>int i = 0;
-while (i < 5) {
-    print(i);
-    i++;
-}</pre>
-            `
-        },
-        examples: {
-            title: "🔷 Примеры",
-            content: `
-                <h3>Сумма чисел</h3>
-                <pre>int sum = 0;
-for (int i = 1; i <= 10; i++) {
-    sum += i;
-}
-print("Сумма: " + sum);</pre>
-                <h3>Факториал (итеративный)</h3>
-                <pre>int factorial = 1;
-for (int i = 1; i <= 5; i++) {
-    factorial *= i;
-}
-print(factorial); // 120</pre>
-            `
-        },
-        errors: {
-            title: "❌ Ошибки",
-            content: `
-                <h3>Список ошибок</h3>
-                <div class="error-item">
-                    <code>SyntaxError</code> - синтаксическая ошибка
-                </div>
-                <div class="error-item">
-                    <code>TypeError</code> - несоответствие типов
-                </div>
-                <div class="error-item">
-                    <code>ReferenceError</code> - неизвестная переменная
-                </div>
-            `
-        }
+    debugger: {
+      price: 200,
+      bought: false,
+      description: "Инструменты для отладки кода"
     }
+  },
+
+  // Покупка валюты
+  yandexProducts: {
+    100: {price: 10, amount: 100},
+    250: {price: 20, amount: 250},
+    600: {price: 50, amount: 600}
+  },
+
+  // Задания
+  tasks: {
+    1: {
+      description: "Напиши функцию add(a, b), которая возвращает a + b.",
+      solution: "function add(a, b) {\n  return a + b;\n}",
+      reward: 50,
+      completed: false
+    },
+    2: {
+      description: "Напиши функцию isEven(n), которая проверяет, чётное ли число.",
+      solution: "function isEven(n) {\n  return n % 2 === 0;\n}",
+      reward: 80,
+      completed: false
+    }
+  },
+
+  // Доступные приложения
+  startingApps: ['notepad', 'browser', 'wallet', 'console'],
+
 };
 
 // ===== СОСТОЯНИЕ ИГРЫ =====
@@ -246,8 +111,18 @@ const GameState = {
 };
 
 const Documentation = {
+    init() {
+        document.querySelectorAll('.doc-menu div[data-section]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                this.show(btn.dataset.section);
+            });
+        });
+    },
+
+
+
     show(section) {
-        const doc = GameConfig.docs[section];
+        const doc = GrindDocs[section];
         if (!doc) return;
 
         const docContent = document.getElementById('doc-content');
@@ -256,6 +131,7 @@ const Documentation = {
                 <h2>${doc.title}</h2>
                 <div class="doc-content">${doc.content}</div>
             `;
+            docContent.scrollTop = 0;
         }
     },
 
@@ -263,7 +139,7 @@ const Documentation = {
         query = query.toLowerCase();
         let results = [];
 
-        for (const [section, content] of Object.entries(GameConfig.docs)) {
+        for (const [section, content] of Object.entries(GrindDocs)) {
             if (content.title.toLowerCase().includes(query) ||
                 content.content.toLowerCase().includes(query)) {
                 results.push(`
@@ -287,43 +163,19 @@ const Documentation = {
 
 // ===== КОНСОЛЬ =====
 const Console = {
-    activeInputPromise: null, // Для обработки ввода
     init() {
-        // Создаем экземпляр GrindVM с API при инициализации консоли
-        this.vm = new GrindVM(GrindAPI);
-        this.vm.setOutputHandler((text) => {
-            this.print(text, 'output');
-        });
-
-        // Инициализация обработчика команд
         document.getElementById('console-cmd').addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                if (Console.activeInputPromise) {
-                    const inputValue = Console.getInputValue();
-                    document.getElementById('console-cmd').value = '';
-                    Console.activeInputPromise.resolve(inputValue);
-                    Console.activeInputPromise = null;
-                } else {
-                    await Console.executeCommand();
-                }
+                await this.executeCommand();
             }
         });
 
-        // Приветственное сообщение
-        this.print("GrindScript Console v1.0", 'system');
+        this.print("GrindScript Console v1.0", 'system'); // Сохраняем оригинальное название
         this.print("Введите 'help' для списка команд", 'system');
     },
 
-    getInputValue() {
-        const inputElement = document.getElementById('console-cmd');
-        const value = inputElement.value;
-        console.log("getInputValue:", value);
-        return value;
-    },
-
     async executeCommand() {
-        console.log("Console.executeCommand() called");
         const input = document.getElementById('console-cmd');
         const cmd = input.value.trim();
         input.value = '';
@@ -352,60 +204,55 @@ const Console = {
             return;
         }
 
-        // Выполнение кода
         try {
-            await this.executeGrindScript(cmd);
+            await this.executeJavaScript(cmd);
         } catch (e) {
-            this.handleError(e, cmd);
+            this.print(`Ошибка: ${e.message}`, 'error');
         }
     },
 
-    async executeGrindScript(code) {
-        try {
-            const lexer = new GrindLexer();
-            const tokens = lexer.tokenize(code);
-            console.log("LEXER Tokens:", tokens);
+    async executeJavaScript(code) {
+        // Ограничиваем доступные функции
+        const sandbox = {
+            console: { log: this.print.bind(this) },
+            print: (text) => this.print(text, 'output'),
+            input: GrindAPI.input,
 
-            const parser = new GrindParser(tokens);
-            const ast = parser.parse();
-            console.log("PARSER AST:", ast);
+            // Базовые конструкции
+            var: null, let: null, const: null,
+            if: null, else: null, for: null, while: null,
+            function: null, return: null,
 
-            const vm = new GrindVM(GrindAPI);
-            vm.setOutputHandler((text) => this.print(text, 'output'));
+            // Математические операции
+            Math: {
+                abs: Math.abs, round: Math.round,
+                floor: Math.floor, ceil: Math.ceil,
+                max: Math.max, min: Math.min,
+                random: Math.random
+            },
 
-            const result = await vm.execute(ast);
-            if (result) this.print(result, 'output');
-        } catch (e) {
-            this.handleError(e, code);
-        }
-    },
-
-    handleError(e, code) {
-        if (e instanceof GrindError) {
-            this.print(e.message, 'error');
-            if (e.pos !== undefined && typeof code === 'string') {
-                this.print(GrindError.format(code, e.pos), 'error');
+            // Ограниченный API
+            Array: {
+                from: Array.from, isArray: Array.isArray,
+                prototype: { push: Array.prototype.push, pop: Array.prototype.pop }
             }
-        } else if (e instanceof Error) {
-            this.print("Ошибка: " + e.message, 'error');
-            this.print(e.stack, 'error');
-        } else {
-            this.print("Неизвестная ошибка: " + JSON.stringify(e), 'error');
+        };
+
+        // Запускаем код в песочнице
+        const wrappedCode = `(async () => {
+            with(sandbox) {
+                ${code}
+            }
+        })()`;
+
+        const result = await (new Function('sandbox', wrappedCode))(sandbox);
+        if (result !== undefined) {
+            this.print(String(result), 'output');
         }
     },
 
-    runScript(filename) {
-        if (typeof filename !== 'string') {
-            this.print(`Ошибка: Не указано имя файла`, 'error');
-            return;
-        }
-
+    async runScript(filename) {
         let finalFilename = filename.trim();
-        if (finalFilename === '') {
-            this.print(`Ошибка: Пустое имя файла`, 'error');
-            return;
-        }
-
         if (!finalFilename.endsWith('.gs')) {
             finalFilename += '.gs';
         }
@@ -417,34 +264,48 @@ const Console = {
 
         try {
             this.print(`> Запуск ${finalFilename}...`, 'system');
-            this.executeGrindScript(Notepad.files[finalFilename]);
+            await this.executeJavaScript(Notepad.files[finalFilename]);
         } catch (e) {
-            this.handleError(e, Notepad.files[finalFilename]);
+            this.print(`GrindScript Error: ${e.message}`, 'error'); // Сообщения об ошибках
         }
     },
 
+    // Остальные методы остаются без изменений
     showHelp() {
         this.print("Доступные команды:", 'system');
         this.print("clear - очистить консоль", 'system');
         this.print("help - показать эту справку", 'system');
-        this.print("run <file> - выполнить файл", 'system');
-        this.print("<код> - выполнить код GrindScript", 'system');
+        this.print("run <file> - выполнить файл (.gs)", 'system'); // Указываем .gs
+        this.print("<код> - выполнить код GrindScript", 'system'); // Сохраняем название
     },
 
     print(text, type = 'normal') {
         const output = document.getElementById('console-output');
         const line = document.createElement('div');
         line.className = `console-line console-${type}`;
-        line.textContent = text;
+
+        // Форматирование текста
+        line.textContent = String(text).replace(/\s+/g, ' ').trim();
+
         output.appendChild(line);
-        output.scrollTop = output.scrollHeight;
+
+        // Плавная прокрутка
+        requestAnimationFrame(() => {
+            output.scrollTop = output.scrollHeight;
+        });
     },
 
     clear() {
         const output = document.getElementById('console-output');
+        const systemMessages = Array.from(output.children).filter(line =>
+            line.classList.contains('console-system') ||
+            line.textContent.includes("GrindScript Console")
+        );
         output.innerHTML = '';
+        systemMessages.forEach(msg => output.appendChild(msg));
         this.print("Консоль очищена", 'system');
     }
+
 };
 
 const TaskSystem = {
@@ -738,6 +599,10 @@ const Notepad = {
 
     saveAs() {
         const content = document.getElementById('code-editor').value;
+
+        // Дебаунс для избежания рекурсии
+        let isSaving = false;
+
         Modal.open('Сохранить файл', `
             <div class="save-container">
                 <input type="text" id="filename-input"
@@ -746,18 +611,27 @@ const Notepad = {
                 <div class="file-extension">.gs</div>
             </div>
         `, () => {
+            if (isSaving) return;
+            isSaving = true;
+
             const filename = document.getElementById('filename-input').value.trim();
             if (!filename) {
                 Modal.open('Ошибка', 'Имя файла не может быть пустым!');
+                isSaving = false;
                 return;
             }
 
             const fullName = filename.endsWith('.gs') ? filename : `${filename}.gs`;
-            this.currentFile = fullName;
-            this.files[fullName] = content;
-            this.persistFiles();
-            FileManager.renderDesktopFiles();
-            Modal.close();
+
+            // Асинхронное сохранение
+            setTimeout(() => {
+                this.currentFile = fullName;
+                this.files[fullName] = content;
+                this.persistFiles();
+                FileManager.renderDesktopFiles();
+                Modal.close();
+                isSaving = false;
+            }, 100);
         });
     },
 
@@ -1012,17 +886,58 @@ const WindowDrag = {
     }
 };
 
+
+WindowDrag.init = function() {
+  document.querySelectorAll('.window-header').forEach(header => {
+    header.addEventListener('mousedown', this.startDrag);
+  });
+
+  // Фикс для обновления консоли при изменении размера
+  const observer = new ResizeObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.target.id === 'console') {
+        const input = document.getElementById('console-cmd');
+        input.style.width = entry.contentRect.width - 20 + 'px'; // Ширина минус отступы
+      }
+    });
+  });
+
+  window.addEventListener('resize', () => {
+      const output = document.getElementById('console-output');
+      output.style.width = '100%'; // Сбрасываем ширину
+      output.scrollTop = output.scrollHeight; // Перепозиционируем скролл
+  });
+
+  // Наблюдаем за изменением размеров консоли
+  observer.observe(document.getElementById('console'));
+};
+
 // ===== ИНИЦИАЛИЗАЦИЯ =====
 document.addEventListener('DOMContentLoaded', () => {
     GameState.load();
     WindowDrag.init();
     Shop.updateUI();
+    Documentation.init();
     Wallet.init();
     Notepad.init();
     FileManager.init();
     FileManager.renderDesktopFiles();
-
     Console.init();
+
+    const output = document.getElementById('console-output');
+    output.scrollTop = output.scrollHeight;
+
+    setTimeout(() => {
+        const consoleWindow = document.getElementById('console');
+        consoleWindow.style.display = 'none';
+        consoleWindow.style.display = 'block';
+    }, 10);
+
+    document.querySelectorAll('.doc-menu div[data-section]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            Documentation.show(btn.dataset.section);
+        });
+    });
 
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' || e.key === 'Enter') {
@@ -1042,14 +957,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// Глобальная обработка ошибок для отладки
-window.addEventListener('unhandledrejection', function(event) {
-    if (Console && typeof Console.print === 'function') {
-        Console.print("Глобальная ошибка (Promise): " + event.reason, 'error');
-    }
-});
-window.addEventListener('error', function(event) {
-    if (Console && typeof Console.print === 'function') {
-        Console.print("Глобальная ошибка (Error): " + event.message, 'error');
-    }
-});
+

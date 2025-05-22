@@ -107,19 +107,15 @@
                 <h2>GrindScript Справочник</h2>
                 <div class="doc-search">
                     <input type="text" id="doc-search" placeholder="Поиск по документации...">
-                    <button onclick="Documentation.search(document.getElementById('doc-search').value)">
-                        Найти
-                    </button>
+                    <button onclick="Documentation.search(document.getElementById('doc-search').value)">Найти</button>
                 </div>
                 <div class="doc-menu">
-                    <div onclick="Documentation.show('basics')">Основы</div>
-                    <div onclick="Documentation.show('variables')">Переменные</div>
-                    <div onclick="Documentation.show('operators')">Операторы</div>
-                    <div onclick="Documentation.show('conditions')">Условия</div>
-                    <div onclick="Documentation.show('loops')">Циклы</div>
-                    <div onclick="Documentation.show('examples')">Примеры</div>
-                    <div onclick="Documentation.show('errors')">Ошибки</div>
-                    <div onclick="Documentation.show('io')">Ввод/Вывод</div>
+                    <div data-section="basics">🟢 Основы</div>
+                    <div data-section="types">📦 Типы</div>
+                    <div data-section="functions">ƒ Функции</div>
+                    <div data-section="conditions">❓ Условия</div>
+                    <div data-section="loops">🔄 Циклы</div>
+                    <div data-section="errors">❌ Ошибки</div>
                 </div>
                 <div id="doc-content"></div>
             </div>
@@ -211,6 +207,7 @@
 
 
     <script src="js/grindscript/error.js"></script>
+    <script src="js/grindscript/docs.js"></script>
     <script src="js/grindscript/api.js"></script>
     <script src="js/grindscript/lexer.js"></script>
     <script src="js/grindscript/parser.js"></script>
