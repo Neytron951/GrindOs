@@ -58,7 +58,7 @@
             </div>
             <div class="console-output" id="console-output"></div>
             <div class="console-input">
-                <input type="text" id="console-cmd" placeholder="Введите команду (например: run test.gs)...">
+                <input type="text" id="console-cmd" placeholder="Введите команду (например: run test.gs)..." autocomplete="off">
                 <button onclick="Console.executeCommand()">▶</button>
             </div>
         </div>
@@ -92,13 +92,15 @@
             <!-- Вкладка фриланса -->
             <div id="freelance" class="tab-content" style="display:none;">
                 <h3>CodeGig</h3>
-                <div class="task" data-task-id="1" onclick="TaskSystem.start(1)">
-                    <h4>Сложи два числа</h4>
-                    <p>Напиши функцию add(a, b). Награда: 50 RAM.</p>
-                </div>
-                <div class="task" data-task-id="2" onclick="TaskSystem.start(2)">
-                    <h4>Проверка на чётность</h4>
-                    <p>Напиши функцию isEven(n). Награда: 80 RAM.</p>
+                <div class="task-list" id="task-list">
+                    <div class="task" data-task-id="1" onclick="TaskSystem.showTaskDetails('1')">
+                        <h4>📟 Уровень 1: Вывести 5</h4>
+                        <p>🔸 Сложность: 1 | 🎁 Награда: 50 RAM</p>
+                    </div>
+                    <div class="task" data-task-id="2" onclick="TaskSystem.showTaskDetails('2')">
+                        <h4>💻 Уровень 2: Функция сложения</h4>
+                        <p>🔸 Сложность: 2 | 🎁 Награда: 80 RAM</p>
+                    </div>
                 </div>
             </div>
 
@@ -106,7 +108,7 @@
             <div id="docs" class="tab-content" style="display:none;">
                 <h2>GrindScript Справочник</h2>
                 <div class="doc-search">
-                    <input type="text" id="doc-search" placeholder="Поиск по документации...">
+                    <input type="text" id="doc-search" placeholder="Поиск по документации..." autocomplete="off" >
                     <button onclick="Documentation.search(document.getElementById('doc-search').value)">Найти</button>
                 </div>
                 <div class="doc-menu">
@@ -116,6 +118,7 @@
                     <div data-section="conditions">❓ Условия</div>
                     <div data-section="loops">🔄 Циклы</div>
                     <div data-section="errors">❌ Ошибки</div>
+                    <div data-section="arrays">📚 Массивы</div>
                 </div>
                 <div id="doc-content"></div>
             </div>
@@ -164,6 +167,10 @@
     </div>
 
 
+    <div class="reputation-info">
+        Уровень: <span id="player-level">1</span>
+        Репутация: <span id="player-rep">0</span>
+    </div>
 
 
     <!-- Модальные окна -->
@@ -186,14 +193,20 @@
         <div class="os-modal-content">
             <div class="os-modal-header">
                 <span>Сохранить файл</span>
-                <button class="close-btn" onclick="Modal.close()">X</button>
+                <button class="close-btn" onclick="Notepad.cancelSave()">X</button>
             </div>
             <div class="os-modal-body">
-                <input type="text" id="filename-input" placeholder="имя_файла.gs" value="новый_файл.gs">
+                <div class="save-container">
+                    <input type="text" id="filename-input"
+                           placeholder="новый_файл"
+                           value="новый_файл.gs"
+                           autocomplete="off">
+                    <div class="file-extension">.gs</div>
+                </div>
             </div>
             <div class="os-modal-footer">
-                <button onclick="Notepad.confirmSave()">Сохранить</button>
-                <button onclick="Modal.close()">Отмена</button>
+                <button onclick="Notepad.performSave()">Сохранить</button>
+                <button onclick="Notepad.cancelSave()">Отмена</button>
             </div>
         </div>
     </div>
@@ -206,12 +219,9 @@
     </div>
 
 
-    <script src="js/grindscript/error.js"></script>
+
     <script src="js/grindscript/docs.js"></script>
-    <script src="js/grindscript/api.js"></script>
-    <script src="js/grindscript/lexer.js"></script>
-    <script src="js/grindscript/parser.js"></script>
-    <script src="js/grindscript/vm.js"></script>
+    <script src="js/tasks.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

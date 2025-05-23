@@ -11,6 +11,15 @@ body, textarea, button {
     font-size: 14px;
 }
 
+
+.os-modal button,
+.task-actions button,
+.context-menu .context-item {
+    font-family: 'Press Start 2P', cursive !important;
+    font-size: 10px; /* Для лучшей читаемости */
+    text-transform: uppercase; /* Стилизация под ретро-интерфейс */
+}
+
 /* ===== РАБОЧИЙ СТОЛ ===== */
 #desktop {
     width: 100vw;
@@ -422,6 +431,54 @@ body, textarea, button {
     font-family: 'Press Start 2P', cursive;
     font-size: 12px;
     transition: all 0.2s;
+}
+
+.reputation-info {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 40, 0, 0.9);
+    padding: 12px;
+    border: 2px solid #0f0;
+    z-index: 9999;
+    box-shadow: 0 0 15px #0f03;
+    font-size: 14px;
+}
+
+.task {
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 15px;
+    background: #252525;
+    margin-bottom: 10px;
+}
+
+.task:hover {
+    transform: translateX(10px);
+    background: rgba(0, 255, 0, 0.05);
+    box-shadow: 0 0 12px #0f03;
+}
+
+
+.task-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.task-actions button {
+    background: #333;
+    color: #0f0;
+    border: 1px solid #0f0;
+    padding: 10px;
+    cursor: pointer;
+}
+
+.task-actions pre {
+    background: #000;
+    padding: 10px;
+    border: 1px solid #0f03;
 }
 
 .earn-btn {

@@ -1,7 +1,7 @@
 // ===== КОНФИГУРАЦИЯ ИГРЫ =====
 const GameConfig = {
   // Основные настройки
-  enableSounds: false,
+  enableSounds: true,
   startingRamCoins: 100,
   adReward: 50,
 
@@ -44,7 +44,6 @@ const GameConfig = {
 
   // Доступные приложения
   startingApps: ['notepad', 'browser', 'wallet', 'console'],
-
 };
 
 // ===== СОСТОЯНИЕ ИГРЫ =====
@@ -54,6 +53,10 @@ const GameState = {
     currentTask: null,
     items: {},
     transactions: [],
+    reputation: 0,
+    level: 1,
+    unlockedDifficulties: [1],
+    purchasedSolutions: {},
 
     save() {
         const saveData = {
@@ -61,26 +64,42 @@ const GameState = {
             unlockedApps: this.unlockedApps,
             currentTask: this.currentTask,
             items: this.items,
-            transactions: this.transactions
+            transactions: this.transactions,
+            reputation: this.reputation,
+            level: this.level,
+            unlockedDifficulties: this.unlockedDifficulties
         };
-        localStorage.setItem('codeGrindSave', JSON.stringify(saveData));
+        // Временно отключаем localStorage для предотвращения ошибок
+        try {
+            localStorage.setItem('codeGrindSave', JSON.stringify(saveData));
+        } catch (e) {
+            console.log('Сохранение недоступно:', e);
+        }
     },
 
     load() {
-        const saved = localStorage.getItem('codeGrindSave');
-        if (saved) {
-            const data = JSON.parse(saved);
-            this.ramCoins = data.ramCoins || GameConfig.startingRamCoins;
-            this.unlockedApps = data.unlockedApps || GameConfig.startingApps;
-            this.currentTask = data.currentTask || null;
-            this.items = data.items || {};
-            this.transactions = data.transactions || [];
+        try {
+            const saved = localStorage.getItem('codeGrindSave');
+            if (saved) {
+                const data = JSON.parse(saved);
+                this.ramCoins = data.ramCoins || GameConfig.startingRamCoins;
+                this.unlockedApps = data.unlockedApps || GameConfig.startingApps;
+                this.currentTask = data.currentTask || null;
+                this.items = data.items || {};
+                this.unlockedDifficulties = data.unlockedDifficulties || [1];
+                this.transactions = data.transactions || [];
+                this.reputation = data.reputation || 0;
+                this.level = data.level || 1;
 
-            for (const itemId in this.items) {
-                if (GameConfig.items[itemId]) {
-                    GameConfig.items[itemId].bought = true;
+
+                for (const itemId in this.items) {
+                    if (GameConfig.items[itemId]) {
+                        GameConfig.items[itemId].bought = true;
+                    }
                 }
             }
+        } catch (e) {
+            console.log('Загрузка недоступна:', e);
         }
     },
 
@@ -118,8 +137,6 @@ const Documentation = {
             });
         });
     },
-
-
 
     show(section) {
         const doc = GrindDocs[section];
@@ -171,7 +188,7 @@ const Console = {
             }
         });
 
-        this.print("GrindScript Console v1.0", 'system'); // Сохраняем оригинальное название
+        this.print("GrindScript Console v1.0", 'system');
         this.print("Введите 'help' для списка команд", 'system');
     },
 
@@ -212,42 +229,34 @@ const Console = {
     },
 
     async executeJavaScript(code) {
-        // Ограничиваем доступные функции
         const sandbox = {
             console: { log: this.print.bind(this) },
             print: (text) => this.print(text, 'output'),
-            input: GrindAPI.input,
-
-            // Базовые конструкции
-            var: null, let: null, const: null,
-            if: null, else: null, for: null, while: null,
-            function: null, return: null,
-
-            // Математические операции
             Math: {
                 abs: Math.abs, round: Math.round,
                 floor: Math.floor, ceil: Math.ceil,
                 max: Math.max, min: Math.min,
                 random: Math.random
             },
-
-            // Ограниченный API
             Array: {
                 from: Array.from, isArray: Array.isArray,
                 prototype: { push: Array.prototype.push, pop: Array.prototype.pop }
             }
         };
 
-        // Запускаем код в песочнице
-        const wrappedCode = `(async () => {
-            with(sandbox) {
-                ${code}
-            }
-        })()`;
+        try {
+            const wrappedCode = `(async () => {
+                with(sandbox) {
+                    ${code}
+                }
+            })()`;
 
-        const result = await (new Function('sandbox', wrappedCode))(sandbox);
-        if (result !== undefined) {
-            this.print(String(result), 'output');
+            const result = await (new Function('sandbox', wrappedCode))(sandbox);
+            if (result !== undefined) {
+                this.print(String(result), 'output');
+            }
+        } catch (e) {
+            throw e;
         }
     },
 
@@ -266,30 +275,25 @@ const Console = {
             this.print(`> Запуск ${finalFilename}...`, 'system');
             await this.executeJavaScript(Notepad.files[finalFilename]);
         } catch (e) {
-            this.print(`GrindScript Error: ${e.message}`, 'error'); // Сообщения об ошибках
+            this.print(`GrindScript Error: ${e.message}`, 'error');
         }
     },
 
-    // Остальные методы остаются без изменений
     showHelp() {
         this.print("Доступные команды:", 'system');
         this.print("clear - очистить консоль", 'system');
         this.print("help - показать эту справку", 'system');
-        this.print("run <file> - выполнить файл (.gs)", 'system'); // Указываем .gs
-        this.print("<код> - выполнить код GrindScript", 'system'); // Сохраняем название
+        this.print("run <file> - выполнить файл (.gs)", 'system');
+        this.print("<код> - выполнить код GrindScript", 'system');
     },
 
     print(text, type = 'normal') {
         const output = document.getElementById('console-output');
         const line = document.createElement('div');
         line.className = `console-line console-${type}`;
-
-        // Форматирование текста
         line.textContent = String(text).replace(/\s+/g, ' ').trim();
-
         output.appendChild(line);
 
-        // Плавная прокрутка
         requestAnimationFrame(() => {
             output.scrollTop = output.scrollHeight;
         });
@@ -297,122 +301,289 @@ const Console = {
 
     clear() {
         const output = document.getElementById('console-output');
-        const systemMessages = Array.from(output.children).filter(line =>
-            line.classList.contains('console-system') ||
-            line.textContent.includes("GrindScript Console")
-        );
-        output.innerHTML = '';
-        systemMessages.forEach(msg => output.appendChild(msg));
-        this.print("Консоль очищена", 'system');
+        output.innerHTML = ''; // Полная очистка
+        this.print("GrindScript Console v1.0", 'system');
+        this.print("Введите 'help' для списка команд", 'system');
+        GameState.playSound('file');
     }
-
 };
+
+
+Console.executeAndCapture = async function(code) {
+    const originalPrint = this.print;
+    let output = '';
+
+    this.print = (text, type) => {
+        if (type === 'output') output += text + '\n';
+    };
+
+    await this.executeJavaScript(code);
+    this.print = originalPrint;
+    return output;
+};
+
 
 const TaskSystem = {
-    start(taskId) {
-        const task = GameConfig.tasks[taskId];
-        if (!task) return;
+    currentTask: null,
+    selectedFile: null,
 
-        GameState.currentTask = taskId;
-        Notepad.newFile();
-        document.getElementById('code-editor').value = `// Задание: ${task.description}\n\n`;
-        document.getElementById('submit-task-btn').style.display = 'block';
-        AppManager.open('notepad');
+    init() {
+        document.getElementById('task-list').addEventListener('click', this.handleTaskClick);
     },
 
-    checkSolution() {
-        const taskId = GameState.currentTask;
-        if (!taskId) return false;
+    handleTaskClick(e) {
+        const taskElement = e.target.closest('.task');
+        if (taskElement) {
+            const taskId = taskElement.dataset.taskId;
+            TaskSystem.showTaskDetails(taskId);
+        }
+    },
 
-        const task = GameConfig.tasks[taskId];
-        const code = document.getElementById('code-editor').value;
-
-        try {
-            const testVM = new GrindVM();
-            const testOutput = [];
-            testVM.setOutputHandler(text => testOutput.push(text));
-
-            const lexer = new GrindLexer();
-            const parser = new GrindParser(lexer.tokenize(code));
-            testVM.execute(parser.parse());
-
-            if (taskId === '1') {
-                if (testVM.variables.add &&
-                    typeof testVM.variables.add.value === 'function') {
-                    const add = testVM.variables.add.value;
-                    return add(2, 3) === 5 && add(-1, 1) === 0;
+    showTaskDetails(taskId) {
+        const task = GameTasks[taskId];
+        const modalContent = `
+            <h3>${task.description}</h3>
+            <p>Сложность: ${task.difficulty}/10</p>
+            <p>Награда: ${task.reward} RAM</p>
+            <div class="task-actions">
+                ${!GameState.purchasedSolutions[taskId] ?
+                    `<button onclick="TaskSystem.buySolution(${taskId})">
+                        Купить решение (${Math.floor(task.reward * 0.8)} RAM)
+                    </button>` :
+                    `<pre>${task.solution}</pre>`
                 }
-            }
-            // Аналогичные проверки для других заданий...
-
-            return false;
-        } catch (e) {
-            Console.handleError(e, code);
-            return false;
-        }
+                <button onclick="TaskSystem.loadCode(${taskId})">Загрузить код</button>
+            </div>
+        `;
+        Modal.open(`Задание #${taskId}`, modalContent);
     },
 
-    submitSolution() {
-        if (this.checkSolution()) {
-            Wallet.addCoins(GameConfig.tasks[GameState.currentTask].reward,
-                            `Задание ${GameState.currentTask}`);
-            Modal.open('Успех', 'Задание выполнено правильно!');
-            GameConfig.tasks[GameState.currentTask].completed = true;
-        } else {
-            Modal.open('Ошибка', 'Решение неверное, попробуйте ещё раз');
+    buySolution(taskId) {
+        const task = GameTasks[taskId];
+        const cost = Math.floor(task.reward * 0.8);
+
+        if (GameState.ramCoins < cost) {
+            Modal.open('Ошибка', 'Недостаточно RAM-коинов!');
+            return;
         }
-    }
+
+        Modal.confirm(
+            'Покупка решения',
+            `Купить решение задания за ${cost} RAM?`,
+            () => {
+                Wallet.addCoins(-cost, `Покупка решения задания ${taskId}`);
+                GameState.purchasedSolutions[taskId] = true;
+                GameState.save();
+                TaskSystem.showTaskDetails(taskId);
+            }
+        );
+    },
+
+    loadCode(taskId) {
+        const fileList = Object.keys(Notepad.files)
+            .map(filename => `
+                <div class="file-item" onclick="TaskSystem.selectFile('${filename}', ${taskId})">
+                    ${filename}
+                </div>
+            `).join('');
+
+        Modal.open('Выберите файл', `<div class="file-list">${fileList}</div>`);
+    },
+
+    selectFile(filename, taskId) {
+        this.selectedFile = filename;
+        this.verifySolution(taskId);
+    },
+
+    async verifySolution(taskId) {
+      const task = GameTasks[taskId];
+      const code = Notepad.files[this.selectedFile];
+      let result = false;
+
+      try {
+          if (task.required === 'output') {
+              // Для заданий с проверкой вывода
+              const output = await Console.executeAndCapture(code);
+              result = task.testCases.some(tc =>
+                  output.trim() === tc.expectedOutput.trim()
+              );
+          } else if (task.required === 'function') {
+              // Для заданий с проверкой функций
+              const sandbox = {
+                  console: { log: () => {} },
+                  add: undefined // Очищаем предыдущие значения
+              };
+
+              // Добавляем возврат функции для тестирования
+              const wrappedCode = `${code}\n; add;`;
+
+              // Выполняем код и получаем функцию
+              const userFunc = await Console.executeJavaScript(wrappedCode, sandbox);
+
+              // Проверяем все тестовые случаи
+              result = task.testCases.every(tc =>
+                  userFunc(...tc.args) === tc.expected
+              );
+          }
+      } catch (e) {
+          result = false;
+      }
+
+      if (result) {
+          GameState.reputation += 5;
+          Wallet.addCoins(task.reward, `Задание ${taskId}`);
+          Modal.open('✅ Успех', `Задание выполнено!<br>+5 к репутации<br>+${task.reward} RAM`);
+      } else {
+          GameState.reputation = Math.max(0, GameState.reputation - 3);
+          Modal.open('❌ Ошибка', 'Неверное решение! -3 к репутации');
+      }
+
+      this.updateLevel();
+      GameState.save();
+      updateReputationUI();
+  },
+
+    updateLevel() {
+        const reputation = GameState.reputation;
+        const newLevel = Math.min(Math.floor(reputation / 20) + 1, 10);
+
+        if (newLevel > GameState.level) {
+            GameState.level = newLevel;
+
+            // Разблокируем новые уровни сложности
+            if (!GameState.unlockedDifficulties.includes(newLevel)) {
+                GameState.unlockedDifficulties.push(newLevel);
+            }
+
+            Modal.open('🎉 Уровень повышен!', `Новый уровень: ${newLevel}`);
+            GameState.save(); // Сохраняем изменения
+        }
+
+        updateReputationUI();
+    },
+
 };
 
+function updateReputationUI() {
+    const levelElement = document.getElementById('player-level');
+    const repElement = document.getElementById('player-rep');
+
+    if (levelElement) levelElement.textContent = GameState.level;
+    if (repElement) repElement.textContent = GameState.reputation;
+
+    // Принудительное обновление списка заданий
+    document.querySelectorAll('.task').forEach(task => {
+        const taskId = task.dataset.taskId;
+        const difficulty = GameTasks[taskId].difficulty;
+        task.style.display = GameState.unlockedDifficulties.includes(difficulty)
+            ? 'block'
+            : 'none';
+    });
+}
+
 const Modal = {
+    confirmCallback: null,
+    cancelCallback: null,
+    inputCallback: null,
+
     open(title, message, callback = null) {
         document.getElementById('os-modal-title').textContent = title;
         document.getElementById('os-modal-text').innerHTML = message;
         document.getElementById('os-modal').style.display = 'flex';
 
-        setTimeout(() => {
-            const btn = document.querySelector('.os-modal-footer button');
-            if (btn) btn.focus();
-        }, 100);
+        // Стандартная кнопка OK
+        const modalFooter = document.querySelector('.os-modal-footer');
+        modalFooter.innerHTML = '<button onclick="Modal.close()">OK</button>';
+
+        // Фокус на input если есть
+        const input = document.querySelector('.os-modal-body input');
+        if (input) {
+            setTimeout(() => {
+                input.focus();
+                input.select();
+            }, 50);
+        }
 
         if (callback) {
-            this.callback = callback;
+            this.inputCallback = callback;
         }
 
         GameState.playSound('open');
     },
 
+    // Новый метод для инпута с колбэком
+    input(title, message, defaultValue = '', callback = null) {
+        document.getElementById('os-modal-title').textContent = title;
+        document.getElementById('os-modal-text').innerHTML = `
+            ${message}
+            <input type="text" id="modal-input" value="${defaultValue}" style="width: 100%; margin-top: 10px; padding: 5px;">
+        `;
+        document.getElementById('os-modal').style.display = 'flex';
+
+        const modalFooter = document.querySelector('.os-modal-footer');
+        modalFooter.innerHTML = `
+            <button onclick="Modal.submitInput()">OK</button>
+            <button onclick="Modal.close()">Отмена</button>
+        `;
+
+        this.inputCallback = callback;
+
+        setTimeout(() => {
+            const input = document.getElementById('modal-input');
+            if (input) {
+                input.focus();
+                input.select();
+                input.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        Modal.submitInput();
+                    }
+                });
+            }
+        }, 50);
+
+        GameState.playSound('open');
+    },
+
+    submitInput() {
+        const input = document.getElementById('modal-input');
+        if (input && this.inputCallback) {
+            this.inputCallback(input.value);
+        }
+        this.close();
+    },
+
     close() {
         document.getElementById('os-modal').style.display = 'none';
-        if (this.callback) {
-            this.callback();
-            this.callback = null;
-        }
+        this.confirmCallback = null;
+        this.cancelCallback = null;
+        this.inputCallback = null;
         GameState.playSound('close');
     },
 
     confirm(title, message, confirmCallback, cancelCallback = null) {
-        this.open(title, message, () => {
-            const modalFooter = document.querySelector('.os-modal-footer');
-            modalFooter.innerHTML = `
-                <button onclick="Modal.confirmAction(true)">Да</button>
-                <button onclick="Modal.confirmAction(false)">Нет</button>
-            `;
+        document.getElementById('os-modal-title').textContent = title;
+        document.getElementById('os-modal-text').innerHTML = message;
+        document.getElementById('os-modal').style.display = 'flex';
 
-            this.confirmCallback = confirmCallback;
-            this.cancelCallback = cancelCallback;
-        });
+        const modalFooter = document.querySelector('.os-modal-footer');
+        modalFooter.innerHTML = `
+            <button onclick="Modal.confirmAction(true)">Да</button>
+            <button onclick="Modal.confirmAction(false)">Отмена</button>
+        `;
+
+        this.confirmCallback = confirmCallback;
+        this.cancelCallback = cancelCallback || (() => Modal.close());
+
+        GameState.playSound('open');
     },
 
     confirmAction(confirmed) {
-        this.close();
         if (confirmed && this.confirmCallback) {
             this.confirmCallback();
         } else if (!confirmed && this.cancelCallback) {
             this.cancelCallback();
         }
-        this.confirmCallback = null;
-        this.cancelCallback = null;
+        this.close();
     }
 };
 
@@ -420,18 +591,22 @@ const FileManager = {
     selectedFile: null,
 
     init() {
+        console.log('Инициализация FileManager');
         this.renderDesktopFiles();
 
+        // Обработчик клика по рабочему столу (скрытие контекстного меню)
         document.getElementById('desktop').addEventListener('click', (e) => {
             if (!e.target.closest('.desktop-icon') && !e.target.closest('.context-menu')) {
                 this.hideContextMenu();
             }
         });
 
+        // Обработчик правого клика по файлам
         document.getElementById('desktop').addEventListener('contextmenu', (e) => {
             e.preventDefault();
             const icon = e.target.closest('.desktop-icon');
-            if (icon) {
+            if (icon && icon.dataset.filename) {
+                console.log('Правый клик по файлу:', icon.dataset.filename);
                 this.selectedFile = icon.dataset.filename;
                 this.showContextMenu(e.clientX, e.clientY);
             }
@@ -439,23 +614,47 @@ const FileManager = {
     },
 
     renderDesktopFiles() {
+        console.log('Обновляем файлы на рабочем столе');
         const desktop = document.getElementById('desktop');
-        desktop.querySelectorAll('.desktop-icon').forEach(icon => icon.remove());
 
-        Object.keys(Notepad.files).forEach((filename, index) => {
+        // Удаляем только файловые иконки (с data-filename)
+        const fileIcons = desktop.querySelectorAll('.desktop-icon[data-filename]');
+        console.log('Найдено файловых иконок для удаления:', fileIcons.length);
+        fileIcons.forEach(icon => {
+            console.log('Удаляем иконку:', icon.dataset.filename);
+            icon.remove();
+        });
+
+        // Создаем новые иконки для всех файлов
+        const files = Object.keys(Notepad.files);
+        console.log('Создаем иконки для файлов:', files);
+
+        files.forEach((filename, index) => {
             const icon = document.createElement('div');
             icon.className = 'desktop-icon';
             icon.dataset.filename = filename;
-            icon.innerHTML = `<img src="icons/file-gs.png"><div>${filename}</div>`;
-            icon.addEventListener('dblclick', () => this.openFile(filename));
+            icon.innerHTML = `
+                <img src="icons/file-gs.png" onerror="this.style.display='none'">
+                <div>${filename}</div>
+            `;
 
+            // Добавляем обработчик двойного клика
+            icon.addEventListener('dblclick', () => {
+                console.log('Двойной клик по файлу:', filename);
+                this.openFile(filename);
+            });
+
+            // Позиционирование иконки
             const row = Math.floor(index / 5);
             const col = index % 5;
             icon.style.left = `${120 + col * 90}px`;
             icon.style.top = `${20 + row * 100}px`;
 
             desktop.appendChild(icon);
+            console.log('Добавлена иконка для файла:', filename);
         });
+
+        console.log('Обновление рабочего стола завершено');
     },
 
     openFile(filename) {
@@ -474,53 +673,70 @@ const FileManager = {
         if (!this.selectedFile) return;
 
         const currentName = this.selectedFile.replace('.gs', '');
-        Modal.open('Переименовать файл', `
-            <div class="rename-container">
-                <input type="text" id="rename-input" value="${currentName}">
-                <div class="file-extension">.gs</div>
-            </div>
-        `, () => {
-            const newName = document.getElementById('rename-input').value.trim();
-            if (newName && newName !== currentName) {
-                Notepad.renameFile(this.selectedFile, newName);
-            }
-        });
+        const oldFileName = this.selectedFile;
 
-        setTimeout(() => {
-            const input = document.getElementById('rename-input');
-            if (input) {
-                input.focus();
-                input.select();
+        Modal.input(
+            'Переименовать файл',
+            `Новое имя файла:`,
+            currentName,
+            (newName) => {
+                if (newName && newName.trim()) {
+                    Notepad.renameFile(oldFileName, newName.trim());
+                }
             }
-        }, 50);
+        );
 
         this.hideContextMenu();
     },
 
     deleteSelected() {
-        if (!this.selectedFile) return;
+        console.log('deleteSelected вызван для файла:', this.selectedFile);
 
-        Modal.confirm('Удаление файла', `Вы уверены, что хотите удалить "${this.selectedFile}"?`,
+        if (!this.selectedFile) {
+            console.log('Нет выбранного файла');
+            return;
+        }
+
+        const filename = this.selectedFile;
+
+        Modal.confirm(
+            'Удаление файла',
+            `Вы уверены, что хотите удалить "${filename}"?`,
             () => {
-                Notepad.deleteFile(this.selectedFile);
+                console.log('Подтверждено удаление файла:', filename);
+                Notepad.deleteFile(filename);
                 this.selectedFile = null;
-                FileManager.renderDesktopFiles();
             },
             () => {
-                this.selectedFile = null;
+                console.log('Удаление отменено');
+                this.hideContextMenu();
             }
         );
     },
 
     showContextMenu(x, y) {
+        console.log('Показываем контекстное меню в позиции:', x, y);
+        console.log('Выбранный файл:', this.selectedFile);
+
         const menu = document.getElementById('context-menu');
-        menu.style.display = 'block';
-        menu.style.left = `${x}px`;
-        menu.style.top = `${y}px`;
+        if (menu) {
+            menu.style.display = 'block';
+            menu.style.left = `${x}px`;
+            menu.style.top = `${y}px`;
+            console.log('Контекстное меню показано');
+        } else {
+            console.error('Элемент context-menu не найден!');
+        }
     },
 
     hideContextMenu() {
-        document.getElementById('context-menu').style.display = 'none';
+        console.log('Скрываем контекстное меню');
+        const menu = document.getElementById('context-menu');
+        if (menu) {
+            menu.style.display = 'none';
+        }
+        this.selectedFile = null;
+        console.log('Контекстное меню скрыто, selectedFile сброшен');
     }
 };
 
@@ -529,15 +745,23 @@ const Notepad = {
     files: {},
 
     init() {
-        const savedFiles = localStorage.getItem('grindScriptFiles');
-        this.files = savedFiles ? JSON.parse(savedFiles) : {};
+        try {
+            const savedFiles = localStorage.getItem('grindScriptFiles');
+            this.files = savedFiles ? JSON.parse(savedFiles) : {};
+        } catch (e) {
+            console.log('Загрузка файлов недоступна:', e);
+            this.files = {};
+        }
 
-        document.getElementById('code-editor').addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 's') {
-                e.preventDefault();
-                this.save();
-            }
-        });
+        const editor = document.getElementById('code-editor');
+        if (editor) {
+            editor.addEventListener('keydown', (e) => {
+                if (e.ctrlKey && e.key === 's') {
+                    e.preventDefault();
+                    this.save();
+                }
+            });
+        }
     },
 
     newFile() {
@@ -559,7 +783,10 @@ const Notepad = {
     _clearEditor() {
         this.currentFile = null;
         document.getElementById('code-editor').value = '';
-        document.getElementById('notepad-title').textContent = 'Блокнот - новый файл';
+        const title = document.getElementById('notepad-title');
+        if (title) {
+            title.textContent = 'Блокнот - новый файл';
+        }
         AppManager.open('notepad');
     },
 
@@ -583,11 +810,17 @@ const Notepad = {
         }
         this.currentFile = filename;
         document.getElementById('code-editor').value = this.files[filename];
-        document.getElementById('notepad-title').textContent = `Блокнот - ${filename}`;
+        const title = document.getElementById('notepad-title');
+        if (title) {
+            title.textContent = `Блокнот - ${filename}`;
+        }
     },
 
     save() {
-        const content = document.getElementById('code-editor').value;
+        const editor = document.getElementById('code-editor');
+        if (!editor) return;
+
+        const content = editor.value;
         if (!this.currentFile) {
             this.saveAs();
             return;
@@ -598,81 +831,174 @@ const Notepad = {
     },
 
     saveAs() {
-        const content = document.getElementById('code-editor').value;
+        const editor = document.getElementById('code-editor');
+        if (!editor) return;
 
-        // Дебаунс для избежания рекурсии
-        let isSaving = false;
+        const content = editor.value;
+        const defaultName = this.currentFile ? this.currentFile.replace('.gs', '') : 'новый_файл';
 
-        Modal.open('Сохранить файл', `
-            <div class="save-container">
-                <input type="text" id="filename-input"
-                       placeholder="новый_файл"
-                       value="${this.currentFile?.replace('.gs', '') || ''}">
-                <div class="file-extension">.gs</div>
-            </div>
-        `, () => {
-            if (isSaving) return;
-            isSaving = true;
-
-            const filename = document.getElementById('filename-input').value.trim();
-            if (!filename) {
-                Modal.open('Ошибка', 'Имя файла не может быть пустым!');
-                isSaving = false;
-                return;
+        Modal.input(
+            'Сохранить как',
+            'Имя файла:',
+            defaultName,
+            (filename) => {
+                if (filename && filename.trim()) {
+                    this._finalizeSave(filename.trim(), content);
+                }
             }
+        );
+    },
 
-            const fullName = filename.endsWith('.gs') ? filename : `${filename}.gs`;
+    _finalizeSave(filename, content) {
+        const fullName = filename.endsWith('.gs') ? filename : `${filename}.gs`;
 
-            // Асинхронное сохранение
-            setTimeout(() => {
-                this.currentFile = fullName;
-                this.files[fullName] = content;
-                this.persistFiles();
-                FileManager.renderDesktopFiles();
-                Modal.close();
-                isSaving = false;
-            }, 100);
-        });
+        if (this.files[fullName] && fullName !== this.currentFile) {
+            Modal.confirm(
+                'Перезаписать файл?',
+                `Файл "${fullName}" уже существует. Перезаписать?`,
+                () => {
+                    this.currentFile = fullName;
+                    this.files[fullName] = content;
+                    this.persistFiles();
+                    const title = document.getElementById('notepad-title');
+                    if (title) {
+                        title.textContent = `Блокнот - ${fullName}`;
+                    }
+                    FileManager.renderDesktopFiles();
+                    Modal.open('Успех', `Файл "${fullName}" сохранён!`);
+                }
+            );
+        } else {
+            this.currentFile = fullName;
+            this.files[fullName] = content;
+            this.persistFiles();
+            const title = document.getElementById('notepad-title');
+            if (title) {
+                title.textContent = `Блокнот - ${fullName}`;
+            }
+            FileManager.renderDesktopFiles();
+            Modal.open('Успех', `Файл "${fullName}" сохранён!`);
+        }
     },
 
     persistFiles() {
-        localStorage.setItem('grindScriptFiles', JSON.stringify(this.files));
-        FileManager.renderDesktopFiles();
+        try {
+            console.log('Сохраняем файлы:', Object.keys(this.files));
+            localStorage.setItem('grindScriptFiles', JSON.stringify(this.files));
+            console.log('Файлы успешно сохранены в localStorage');
+
+            // Обновляем рабочий стол после сохранения
+            FileManager.renderDesktopFiles();
+        } catch (e) {
+            console.log('Сохранение файлов недоступно:', e);
+        }
     },
 
+    // ИСПРАВЛЕННЫЙ МЕТОД ПЕРЕИМЕНОВАНИЯ
     renameFile(oldName, newName) {
-        if (!oldName || !newName || !this.files[oldName]) return;
+        // Валидация входных данных
+        if (!oldName || !newName || !this.files[oldName]) {
+            Modal.open('Ошибка', 'Неверные параметры для переименования!');
+            return;
+        }
 
+        // Очистка имени и проверка
+        newName = newName.trim();
+        if (newName === "") {
+            Modal.open('Ошибка', 'Имя файла не может быть пустым!');
+            return;
+        }
+
+        // Проверка на запрещённые символы
+        const forbiddenChars = /[<>:"/\\|?*]/;
+        if (forbiddenChars.test(newName)) {
+            Modal.open('Ошибка', 'Имя содержит недопустимые символы!');
+            return;
+        }
+
+        // Добавление расширения
         const fullNewName = newName.endsWith('.gs') ? newName : `${newName}.gs`;
 
-        if (fullNewName === oldName) return;
+        // Проверка на совпадение
+        if (fullNewName === oldName) {
+            Modal.open('Информация', 'Новое имя совпадает со старым!');
+            return;
+        }
 
+        // Проверка существования
         if (this.files[fullNewName]) {
             Modal.open('Ошибка', `Файл "${fullNewName}" уже существует!`);
             return;
         }
 
-        this.files[fullNewName] = this.files[oldName];
-        delete this.files[oldName];
+        try {
+            // Переименование
+            this.files[fullNewName] = this.files[oldName];
+            delete this.files[oldName];
 
-        if (this.currentFile === oldName) {
-            this.currentFile = fullNewName;
-            document.getElementById('notepad-title').textContent = `Блокнот - ${fullNewName}`;
+            // Обновление текущего файла
+            if (this.currentFile === oldName) {
+                this.currentFile = fullNewName;
+                const title = document.getElementById('notepad-title');
+                if (title) {
+                    title.textContent = `Блокнот - ${fullNewName}`;
+                }
+            }
+
+            // Сохранение и обновление
+            this.persistFiles();
+            FileManager.renderDesktopFiles();
+
+            Modal.open('Успех', `Файл переименован в: ${fullNewName}`);
+
+        } catch (error) {
+            console.error('Ошибка переименования:', error);
+            Modal.open('Ошибка', `Не удалось переименовать файл: ${error.message}`);
         }
-
-        this.persistFiles();
-        FileManager.renderDesktopFiles();
     },
 
+    // ИСПРАВЛЕННЫЙ МЕТОД УДАЛЕНИЯ
     deleteFile(filename) {
-        if (!filename || !this.files[filename]) return;
+        console.log('Попытка удалить файл:', filename);
 
-        delete this.files[filename];
-        this.persistFiles();
-        FileManager.renderDesktopFiles();
+        if (!filename || !this.files[filename]) {
+            console.log('Файл не найден:', filename);
+            Modal.open('Ошибка', 'Файл не найден!');
+            return;
+        }
 
-        if (this.currentFile === filename) {
-            this.newFile();
+        try {
+            console.log('Удаляем файл:', filename);
+
+            // Удаление файла из объекта
+            delete this.files[filename];
+
+            // Если удаляемый файл открыт в редакторе
+            if (this.currentFile === filename) {
+                console.log('Закрываем открытый файл');
+                this.currentFile = null;
+                document.getElementById('code-editor').value = '';
+                const title = document.getElementById('notepad-title');
+                if (title) {
+                    title.textContent = 'Блокнот - новый файл';
+                }
+            }
+
+            // Сохраняем изменения
+            this.persistFiles();
+
+            // Обновляем интерфейс
+            FileManager.renderDesktopFiles();
+
+            // Скрываем контекстное меню
+            FileManager.hideContextMenu();
+
+            console.log('Файл успешно удален');
+            Modal.open('Успех', `Файл "${filename}" удален!`);
+
+        } catch (error) {
+            console.error('Ошибка удаления файла:', error);
+            Modal.open('Ошибка', `Не удалось удалить файл: ${error.message}`);
         }
     },
 
@@ -681,10 +1007,7 @@ const Notepad = {
             Modal.open('Ошибка', 'Файл не найден!');
             return;
         }
-        this.currentFile = filename;
-        document.getElementById('code-editor').value = this.files[filename];
-        document.getElementById('notepad-title').textContent = `Блокнот - ${filename}`;
-        AppManager.open('notepad');
+        this.openFile(filename);
     }
 };
 
@@ -923,6 +1246,10 @@ document.addEventListener('DOMContentLoaded', () => {
     FileManager.init();
     FileManager.renderDesktopFiles();
     Console.init();
+
+
+    updateReputationUI(); // Инициализация UI
+    setInterval(updateReputationUI, 1000); // Обновление каждую секунду
 
     const output = document.getElementById('console-output');
     output.scrollTop = output.scrollHeight;
