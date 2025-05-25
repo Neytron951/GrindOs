@@ -4,6 +4,18 @@ const GameConfig = {
   enableSounds: true,
   startingRamCoins: 100,
   adReward: 50,
+  coreExchangeRate: 100, // 1 CORE = 100 RAM
+
+  // Настройки майнера
+  miner: {
+    difficultyLevels: [
+      { range: [1, 9], operators: ['+', '-'] },      // Уровень 1
+      { range: [5, 15], operators: ['+', '-', '*'] },// Уровень 2
+      { range: [10, 25], operators: ['*', '/'] }     // Уровень 3
+    ],
+    baseReward: 0.1,
+    rewardMultiplier: 1.2
+  },
 
   // Игровые предметы
   items: {
@@ -16,14 +28,20 @@ const GameConfig = {
       price: 200,
       bought: false,
       description: "Инструменты для отладки кода"
+    },
+    quantum_cpu: {
+      price: 500,
+      bought: false,
+      description: "+20% к скорости майнинга CORE"
     }
   },
 
   // Покупка валюты
   yandexProducts: {
-    100: {price: 10, amount: 100},
-    250: {price: 20, amount: 250},
-    600: {price: 50, amount: 600}
+    100: { price: 10, amount: 100 },
+    250: { price: 20, amount: 250 },
+    600: { price: 50, amount: 600 },
+    1500: { price: 100, amount: "1.5 CORE" }
   },
 
   // Задания
@@ -43,12 +61,35 @@ const GameConfig = {
   },
 
   // Доступные приложения
-  startingApps: ['notepad', 'browser', 'wallet', 'console'],
+  startingApps: ['notepad', 'browser', 'wallet', 'console', 'miner'],
+
+  // Уровни майнинга
+  miningLevels: [
+    {
+      unlockReputation: 0,
+      name: "Базовый ASIC",
+      speed: 1.0,
+      energyUsage: 1.0
+    },
+    {
+      unlockReputation: 50,
+      name: "Квантовый ускоритель",
+      speed: 2.5,
+      energyUsage: 0.8
+    },
+    {
+      unlockReputation: 100,
+      name: "Нейронный кластер",
+      speed: 5.0,
+      energyUsage: 0.5
+    }
+  ]
 };
 
 // ===== СОСТОЯНИЕ ИГРЫ =====
 const GameState = {
     ramCoins: GameConfig.startingRamCoins,
+    coreCoins: 0,
     unlockedApps: GameConfig.startingApps,
     currentTask: null,
     items: {},
@@ -57,19 +98,24 @@ const GameState = {
     level: 1,
     unlockedDifficulties: [1],
     purchasedSolutions: {},
+    miningLevel: 0,
+    miningProgress: 0,
 
     save() {
         const saveData = {
             ramCoins: this.ramCoins,
+            coreCoins: this.coreCoins,
             unlockedApps: this.unlockedApps,
             currentTask: this.currentTask,
             items: this.items,
             transactions: this.transactions,
             reputation: this.reputation,
             level: this.level,
+            miningLevel: this.miningLevel,
+            miningProgress: this.miningProgress,
             unlockedDifficulties: this.unlockedDifficulties
         };
-        // Временно отключаем localStorage для предотвращения ошибок
+        // Сохранение в localStorage
         try {
             localStorage.setItem('codeGrindSave', JSON.stringify(saveData));
         } catch (e) {
@@ -82,21 +128,8 @@ const GameState = {
             const saved = localStorage.getItem('codeGrindSave');
             if (saved) {
                 const data = JSON.parse(saved);
-                this.ramCoins = data.ramCoins || GameConfig.startingRamCoins;
-                this.unlockedApps = data.unlockedApps || GameConfig.startingApps;
-                this.currentTask = data.currentTask || null;
-                this.items = data.items || {};
-                this.unlockedDifficulties = data.unlockedDifficulties || [1];
-                this.transactions = data.transactions || [];
-                this.reputation = data.reputation || 0;
-                this.level = data.level || 1;
-
-
-                for (const itemId in this.items) {
-                    if (GameConfig.items[itemId]) {
-                        GameConfig.items[itemId].bought = true;
-                    }
-                }
+                this.coreCoins = data.coreCoins || 0;
+                // ... остальная логика загрузки
             }
         } catch (e) {
             console.log('Загрузка недоступна:', e);
@@ -1051,6 +1084,10 @@ const AppManager = {
         if (appId === 'wallet') {
             Wallet.updateBalance();
         }
+
+        if (appId === 'miner') {
+            Miner.updateCoreDisplay();
+        }
     },
 
     close(appId) {
@@ -1191,6 +1228,194 @@ const Wallet = {
     }
 };
 
+const Miner = {
+    currentProblem: null,
+    difficultyLevel: 0,
+    autoMinerInterval: null,
+
+    init() {
+        this.generateNewProblem();
+        this.setupEventListeners();
+        this.updateCoreDisplay();
+        setInterval(() => this.updateCoreDisplay(), 100);
+    },
+
+    setupEventListeners() {
+        document.getElementById('answer-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.checkAnswer();
+        });
+    },
+
+    generateNewProblem() {
+        const levelConfig = GameConfig.miner.difficultyLevels[this.difficultyLevel];
+        const [min, max] = levelConfig.range;
+
+        const num1 = Math.floor(Math.random() * (max - min + 1)) + min;
+        const num2 = Math.floor(Math.random() * (max - min + 1)) + min;
+        const operator = levelConfig.operators[Math.floor(Math.random() * levelConfig.operators.length)];
+
+        this.currentProblem = {
+            num1,
+            num2,
+            operator,
+            answer: this.calculateAnswer(num1, num2, operator)
+        };
+
+        this.updateProblemDisplay();
+    },
+
+    calculateAnswer(a, b, op) {
+        switch(op) {
+            case '+': return a + b;
+            case '-': return a - b;
+            case '*': return a * b;
+            case '/': return Math.round((a / b) * 100) / 100;
+            default: return 0;
+        }
+    },
+
+    updateProblemDisplay() {
+        document.getElementById('num1').textContent = this.currentProblem.num1;
+        document.getElementById('operator').textContent = this.currentProblem.operator;
+        document.getElementById('num2').textContent = this.currentProblem.num2;
+        document.getElementById('answer-input').value = '';
+    },
+
+    adjustAnswer(delta) {
+        const input = document.getElementById('answer-input');
+        let value = parseInt(input.value) || 0;
+        value += delta;
+        input.value = value;
+        input.focus();
+    },
+
+    checkAnswer() {
+        const userAnswer = parseFloat(document.getElementById('answer-input').value);
+        const isCorrect = userAnswer === this.currentProblem.answer;
+
+        if (isCorrect) {
+            const reward = this.calculateReward();
+            GameState.coreCoins += reward;
+            GameState.miningProgress += reward * 10;
+
+            this.handleLevelUp();
+            this.generateNewProblem();
+            this.showVisualFeedback(true);
+            GameState.playSound('buy');
+        } else {
+            this.showVisualFeedback(false);
+            GameState.playSound('error');
+        }
+    },
+
+    calculateReward() {
+        let reward = GameConfig.miner.baseReward;
+        if (GameState.items.quantum_cpu) reward *= GameConfig.miner.rewardMultiplier;
+        return reward * GameConfig.miningLevels[GameState.miningLevel].speed;
+    },
+
+    handleLevelUp() {
+        if (GameState.miningProgress >= 100) {
+            GameState.miningLevel = Math.min(GameState.miningLevel + 1, GameConfig.miningLevels.length - 1);
+            GameState.miningProgress = 0;
+            Modal.open('⚡ Уровень повышен!', `Новое оборудование: ${GameConfig.miningLevels[GameState.miningLevel].name}`);
+        }
+    },
+
+    showVisualFeedback(isSuccess) {
+        const equationBox = document.querySelector('.equation-box');
+        equationBox.style.animation = 'none';
+        void equationBox.offsetWidth; // Trigger reflow
+        equationBox.style.animation = `${isSuccess ? 'success' : 'error'}Pulse 0.5s`;
+    },
+
+    convertToRam() {
+        if (GameState.coreCoins < 1) {
+            Modal.open('Ошибка', 'Минимум 1 CORE для конвертации');
+            return;
+        }
+
+        const ramAmount = Math.floor(GameState.coreCoins * GameConfig.coreExchangeRate);
+        GameState.coreCoins = 0;
+        Wallet.addCoins(ramAmount, "Конвертация CORE → RAM");
+        this.updateCoreDisplay();
+    },
+
+    updateCoreDisplay() {
+        document.getElementById('core-balance').textContent = GameState.coreCoins.toFixed(2);
+        const progressBar = document.getElementById('mining-progress');
+        if (progressBar) {
+            progressBar.style.width = `${GameState.miningProgress}%`;
+        }
+    },
+
+    toggleAutoMiner() {
+        if (this.autoMinerInterval) {
+            clearInterval(this.autoMinerInterval);
+            this.autoMinerInterval = null;
+        } else {
+            this.autoMinerInterval = setInterval(() => {
+                this.generateNewProblem();
+                this.checkAnswer();
+            }, 5000);
+        }
+    },
+
+    convertWithAd() {
+        if (GameState.coreCoins < 1) {
+            Modal.open('Ошибка', 'Нужно минимум 1 CORE для обмена');
+            GameState.playSound('error');
+            return;
+        }
+
+        Modal.confirm(
+            'Рекламный обмен',
+            `Посмотреть рекламу для получения 130 RAM за 1 CORE?`,
+            () => {
+                // Эмуляция просмотра рекламы
+                this.showFakeAd(() => {
+                    const ramAmount = Math.floor(1 * GameConfig.coreExchangeRate * 1.3);
+                    GameState.coreCoins -= 1;
+                    Wallet.addCoins(ramAmount, "Рекламный обмен CORE → RAM");
+                    this.updateCoreDisplay();
+                    Modal.open('Успех!', `+${ramAmount} RAM получено!`);
+                });
+            }
+        );
+    },
+
+    showFakeAd(callback) {
+        const adWindow = document.createElement('div');
+        adWindow.className = 'fake-ad';
+        adWindow.innerHTML = `
+            <div class="ad-content">
+                <div class="ad-loader"></div>
+                <div class="ad-text">Загрузка рекламы...</div>
+                <div class="ad-timer">5</div>
+            </div>
+        `;
+
+        document.body.appendChild(adWindow);
+
+        let seconds = 5;
+        const timer = setInterval(() => {
+            seconds--;
+            adWindow.querySelector('.ad-timer').textContent = seconds;
+
+            if (seconds <= 0) {
+                clearInterval(timer);
+                adWindow.remove();
+                callback();
+            }
+        }, 1000);
+    }
+
+
+
+
+};
+
+
 const WindowDrag = {
     init() {
         document.querySelectorAll('.window-header').forEach(header => {
@@ -1267,6 +1492,7 @@ document.addEventListener('DOMContentLoaded', () => {
     FileManager.init();
     FileManager.renderDesktopFiles();
     Console.init();
+    Miner.init();
 
 
     updateReputationUI(); // Инициализация UI

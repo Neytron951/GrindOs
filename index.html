@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>CodeGrind OS</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -28,6 +29,11 @@
             <div class="icon" onclick="AppManager.open('wallet')">
                 <img src="icons/wallet.png" alt="Кошелёк">
                 <div>Кошелёк</div>
+            </div>
+
+            <div class="icon" onclick="AppManager.open('miner')">
+                <img src="icons/miner.png" alt="Майнер">
+                <div>Майнер</div>
             </div>
 
 
@@ -604,12 +610,53 @@
 
                 <div class="transaction-history">
                     <h3>История операций</h3>
-                    <div id="transactions-list">
+                    <div id="transactions-list" class="scroll-container">
                         <!-- Транзакции будут добавляться здесь -->
                     </div>
                 </div>
             </div>
         </div>
+
+        <div id="miner" class="window">
+            <div class="window-header">
+                <span>CORE Майнер v1.2</span>
+                <button class="close-btn" onclick="AppManager.close('miner')">X</button>
+            </div>
+            <div class="miner-content">
+                <div class="miner-stats">
+                    <div class="core-balance">
+                        <img src="icons/core-coin.png" class="core-icon">
+                        <span id="core-balance">0.00</span>
+                    </div>
+                    <div class="exchange-rate">1 CORE = 100 RAM</div>
+                </div>
+
+                <div class="equation-box">
+                    <div class="numbers">
+                        <span id="num1">5</span>
+                        <span id="operator">+</span>
+                        <span id="num2">3</span>
+                        <span class="equals">=</span>
+                    </div>
+
+                    <div class="answer-controls">
+                        <button class="num-btn minus-btn" onclick="Miner.adjustAnswer(-1)">−</button>
+                        <input type="number" id="answer-input" class="nes-input" autocomplete="off">
+                        <button class="num-btn plus-btn" onclick="Miner.adjustAnswer(1)">+</button>
+                    </div>
+                </div>
+
+                <div class="miner-actions">
+                    <button class="check-btn" onclick="Miner.checkAnswer()">Проверить</button>
+                    <button class="convert-btn" onclick="Miner.convertToRam()">Обменять на RAM</button>
+                    <button class="ad-convert-btn" onclick="Miner.convertWithAd()">
+                        Обменять на RAM за рекламу (1.3X)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+
     </div>
 
 
