@@ -93,14 +93,460 @@
             <div id="freelance" class="tab-content" style="display:none;">
                 <h3>CodeGig</h3>
                 <div class="task-list" id="task-list">
-                    <div class="task" data-task-id="1" onclick="TaskSystem.showTaskDetails('1')">
-                        <h4>📟 Уровень 1: Вывести 5</h4>
-                        <p>🔸 Сложность: 1 | 🎁 Награда: 50 RAM</p>
+
+                    <!-- ========== Уровень 1 (5 заданий) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">🔰 Уровень 1: Основы</h4>
+
+                        <!-- Задание 1: Hello World -->
+                        <div class="task" data-task-id="1" onclick="TaskSystem.showTaskDetails('1')">
+                            <div class="task-header">
+                                <span class="task-icon">📟</span>
+                                <span class="task-name">Hello World</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 1</span>
+                                <span class="task-reward">🎁 Награда: 30 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 2: Число 5 -->
+                        <div class="task" data-task-id="2" onclick="TaskSystem.showTaskDetails('2')">
+                            <div class="task-header">
+                                <span class="task-icon">🔢</span>
+                                <span class="task-name">Вывод числа</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 1</span>
+                                <span class="task-reward">🎁 Награда: 30 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 3: Сложение -->
+                        <div class="task" data-task-id="3" onclick="TaskSystem.showTaskDetails('3')">
+                            <div class="task-header">
+                                <span class="task-icon">➕</span>
+                                <span class="task-name">Сумма чисел</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 1</span>
+                                <span class="task-reward">🎁 Награда: 40 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 4: Текст с числом -->
+                        <div class="task" data-task-id="4" onclick="TaskSystem.showTaskDetails('4')">
+                            <div class="task-header">
+                                <span class="task-icon">📝</span>
+                                <span class="task-name">Форматированный вывод</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 1</span>
+                                <span class="task-reward">🎁 Награда: 40 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 5: Вывод списка -->
+                        <div class="task" data-task-id="5" onclick="TaskSystem.showTaskDetails('5')">
+                            <div class="task-header">
+                                <span class="task-icon">🔣</span>
+                                <span class="task-name">Вывод нескольких чисел</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 1</span>
+                                <span class="task-reward">🎁 Награда: 50 RAM</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="task" data-task-id="2" onclick="TaskSystem.showTaskDetails('2')">
-                        <h4>💻 Уровень 2: Функция сложения</h4>
-                        <p>🔸 Сложность: 2 | 🎁 Награда: 80 RAM</p>
+                    <!-- ========== Уровень 2 (5 заданий) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">📦 Уровень 2: Переменные</h4>
+
+                        <!-- Задание 6: Объявление переменной -->
+                        <div class="task" data-task-id="6" onclick="TaskSystem.showTaskDetails('6')">
+                            <div class="task-header">
+                                <span class="task-icon">💾</span>
+                                <span class="task-name">Объявление переменной</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 2</span>
+                                <span class="task-reward">🎁 Награда: 50 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 7: Изменение переменной -->
+                        <div class="task" data-task-id="7" onclick="TaskSystem.showTaskDetails('7')">
+                            <div class="task-header">
+                                <span class="task-icon">🔄</span>
+                                <span class="task-name">Изменение значения</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 2</span>
+                                <span class="task-reward">🎁 Награда: 60 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 8: Умножение -->
+                        <div class="task" data-task-id="8" onclick="TaskSystem.showTaskDetails('8')">
+                            <div class="task-header">
+                                <span class="task-icon">✖️</span>
+                                <span class="task-name">Умножение переменных</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 2</span>
+                                <span class="task-reward">🎁 Награда: 70 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 9: Конкатенация -->
+                        <div class="task" data-task-id="9" onclick="TaskSystem.showTaskDetails('9')">
+                            <div class="task-header">
+                                <span class="task-icon">🔤</span>
+                                <span class="task-name">Сложение строк</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 2</span>
+                                <span class="task-reward">🎁 Награда: 80 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 10: Комбинированные операции -->
+                        <div class="task" data-task-id="10" onclick="TaskSystem.showTaskDetails('10')">
+                            <div class="task-header">
+                                <span class="task-icon">🧮</span>
+                                <span class="task-name">Сложное выражение</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 2</span>
+                                <span class="task-reward">🎁 Награда: 90 RAM</span>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- ========== Уровень 3 (5 заданий) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">❓ Уровень 3: Условия</h4>
+
+                        <!-- Задание 11: Проверка четности -->
+                        <div class="task" data-task-id="11" onclick="TaskSystem.showTaskDetails('11')">
+                            <div class="task-header">
+                                <span class="task-icon">🔢</span>
+                                <span class="task-name">Четное/Нечетное</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 3</span>
+                                <span class="task-reward">🎁 Награда: 100 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 12: Сравнение чисел -->
+                        <div class="task" data-task-id="12" onclick="TaskSystem.showTaskDetails('12')">
+                            <div class="task-header">
+                                <span class="task-icon">⚖️</span>
+                                <span class="task-name">Сравнение a и b</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 3</span>
+                                <span class="task-reward">🎁 Награда: 110 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 13: Проверка пароля -->
+                        <div class="task" data-task-id="13" onclick="TaskSystem.showTaskDetails('13')">
+                            <div class="task-header">
+                                <span class="task-icon">🔒</span>
+                                <span class="task-name">Пароль 1234</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 3</span>
+                                <span class="task-reward">🎁 Награда: 120 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 14: Возрастной рейтинг -->
+                        <div class="task" data-task-id="14" onclick="TaskSystem.showTaskDetails('14')">
+                            <div class="task-header">
+                                <span class="task-icon">👤</span>
+                                <span class="task-name">Проверка возраста</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 3</span>
+                                <span class="task-reward">🎁 Награда: 130 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 15: Логические операторы -->
+                        <div class="task" data-task-id="15" onclick="TaskSystem.showTaskDetails('15')">
+                            <div class="task-header">
+                                <span class="task-icon">🔗</span>
+                                <span class="task-name">Условие с И/ИЛИ</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 3</span>
+                                <span class="task-reward">🎁 Награда: 140 RAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== Уровень 4 (Циклы for) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">🔄 Уровень 4: Циклы for</h4>
+
+                        <!-- Задание 16: Числа 1-5 -->
+                        <div class="task" data-task-id="16" onclick="TaskSystem.showTaskDetails('16')">
+                            <div class="task-header">
+                                <span class="task-icon">🔢</span>
+                                <span class="task-name">Последовательность 1-5</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 4</span>
+                                <span class="task-reward">🎁 Награда: 150 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 17: Сумма чисел -->
+                        <div class="task" data-task-id="17" onclick="TaskSystem.showTaskDetails('17')">
+                            <div class="task-header">
+                                <span class="task-icon">🧮</span>
+                                <span class="task-name">Сумма от 1 до 10</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 4</span>
+                                <span class="task-reward">🎁 Награда: 160 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 18: Четные числа -->
+                        <div class="task" data-task-id="18" onclick="TaskSystem.showTaskDetails('18')">
+                            <div class="task-header">
+                                <span class="task-icon">🔁</span>
+                                <span class="task-name">Четные числа до 10</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 4</span>
+                                <span class="task-reward">🎁 Награда: 170 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 19: Элементы массива -->
+                        <div class="task" data-task-id="19" onclick="TaskSystem.showTaskDetails('19')">
+                            <div class="task-header">
+                                <span class="task-icon">📦</span>
+                                <span class="task-name">Обход массива</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 4</span>
+                                <span class="task-reward">🎁 Награда: 180 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 20: Таблица умножения -->
+                        <div class="task" data-task-id="20" onclick="TaskSystem.showTaskDetails('20')">
+                            <div class="task-header">
+                                <span class="task-icon">✖️</span>
+                                <span class="task-name">Таблица умножения на 3</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 4</span>
+                                <span class="task-reward">🎁 Награда: 190 RAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== Уровень 5 (Циклы while) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">♾️ Уровень 5: Циклы while</h4>
+
+                        <!-- Задание 21: Обратный отсчет -->
+                        <div class="task" data-task-id="21" onclick="TaskSystem.showTaskDetails('21')">
+                            <div class="task-header">
+                                <span class="task-icon">⏪</span>
+                                <span class="task-name">Отсчет от 5 до 1</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 5</span>
+                                <span class="task-reward">🎁 Награда: 200 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 22: Сумма чисел -->
+                        <div class="task" data-task-id="22" onclick="TaskSystem.showTaskDetails('22')">
+                            <div class="task-header">
+                                <span class="task-icon">🧮</span>
+                                <span class="task-name">Сумма от 1 до 10 (while)</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 5</span>
+                                <span class="task-reward">🎁 Награда: 210 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 23: Нечетные числа -->
+                        <div class="task" data-task-id="23" onclick="TaskSystem.showTaskDetails('23')">
+                            <div class="task-header">
+                                <span class="task-icon">🔢</span>
+                                <span class="task-name">Нечетные до 9</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 5</span>
+                                <span class="task-reward">🎁 Награда: 220 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 24: Обход массива -->
+                        <div class="task" data-task-id="24" onclick="TaskSystem.showTaskDetails('24')">
+                            <div class="task-header">
+                                <span class="task-icon">📦</span>
+                                <span class="task-name">Элементы массива (while)</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 5</span>
+                                <span class="task-reward">🎁 Награда: 230 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 25: Кратные 5 -->
+                        <div class="task" data-task-id="25" onclick="TaskSystem.showTaskDetails('25')">
+                            <div class="task-header">
+                                <span class="task-icon">🎯</span>
+                                <span class="task-name">Числа, кратные 5</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 5</span>
+                                <span class="task-reward">🎁 Награда: 240 RAM</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ========== Уровень 6 (Многомерные массивы) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">📚 Уровень 6: Массивы</h4>
+
+                        <!-- Задание 26: Сумма матрицы -->
+                        <div class="task" data-task-id="26" onclick="TaskSystem.showTaskDetails('26')">
+                            <div class="task-header">
+                                <span class="task-icon">🧮</span>
+                                <span class="task-name">Сумма элементов 3x3</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 6</span>
+                                <span class="task-reward">🎁 Награда: 250 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 27: Транспонирование -->
+                        <div class="task" data-task-id="27" onclick="TaskSystem.showTaskDetails('27')">
+                            <div class="task-header">
+                                <span class="task-icon">🔄</span>
+                                <span class="task-name">Транспонирование матрицы</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 6</span>
+                                <span class="task-reward">🎁 Награда: 260 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 28: Поиск элемента -->
+                        <div class="task" data-task-id="28" onclick="TaskSystem.showTaskDetails('28')">
+                            <div class="task-header">
+                                <span class="task-icon">🔍</span>
+                                <span class="task-name">Координаты числа 10</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 6</span>
+                                <span class="task-reward">🎁 Награда: 270 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 29: Сортировка пузырьком -->
+                        <div class="task" data-task-id="29" onclick="TaskSystem.showTaskDetails('29')">
+                            <div class="task-header">
+                                <span class="task-icon">🫧</span>
+                                <span class="task-name">Сортировка массива</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 6</span>
+                                <span class="task-reward">🎁 Награда: 280 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 30: Шахматная доска -->
+                        <div class="task" data-task-id="30" onclick="TaskSystem.showTaskDetails('30')">
+                            <div class="task-header">
+                                <span class="task-icon">♟️</span>
+                                <span class="task-name">Создание доски 8x8</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 6</span>
+                                <span class="task-reward">🎁 Награда: 290 RAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ========== Уровень 7 (Рекурсия и ООП) ========== -->
+                    <div class="level-section">
+                        <h4 class="level-title">🌀 Уровень 7: Алгоритмы</h4>
+
+                        <!-- Задание 31: Факториал -->
+                        <div class="task" data-task-id="31" onclick="TaskSystem.showTaskDetails('31')">
+                            <div class="task-header">
+                                <span class="task-icon">🎲</span>
+                                <span class="task-name">Рекурсивный факториал</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 7</span>
+                                <span class="task-reward">🎁 Награда: 300 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 32: Фибоначчи -->
+                        <div class="task" data-task-id="32" onclick="TaskSystem.showTaskDetails('32')">
+                            <div class="task-header">
+                                <span class="task-icon">📈</span>
+                                <span class="task-name">Числа Фибоначчи</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 7</span>
+                                <span class="task-reward">🎁 Награда: 310 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 33: Объекты -->
+                        <div class="task" data-task-id="33" onclick="TaskSystem.showTaskDetails('33')">
+                            <div class="task-header">
+                                <span class="task-icon">👤</span>
+                                <span class="task-name">Инвентарь игрока</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 7</span>
+                                <span class="task-reward">🎁 Награда: 320 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 34: Бинарный поиск -->
+                        <div class="task" data-task-id="34" onclick="TaskSystem.showTaskDetails('34')">
+                            <div class="task-header">
+                                <span class="task-icon">🔎</span>
+                                <span class="task-name">Поиск в массиве</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 7</span>
+                                <span class="task-reward">🎁 Награда: 330 RAM</span>
+                            </div>
+                        </div>
+
+                        <!-- Задание 35: Обработка ошибок -->
+                        <div class="task" data-task-id="35" onclick="TaskSystem.showTaskDetails('35')">
+                            <div class="task-header">
+                                <span class="task-icon">🚨</span>
+                                <span class="task-name">Деление на ноль</span>
+                            </div>
+                            <div class="task-details">
+                                <span class="task-difficulty">🔸 Сложность: 7</span>
+                                <span class="task-reward">🎁 Награда: 340 RAM</span>
+                            </div>
+                        </div>
+                    </div>
+
+
                 </div>
             </div>
 

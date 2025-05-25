@@ -126,6 +126,8 @@ body, textarea, button {
 
 
 
+
+
 /* Блокнот */
 #code-editor {
     font-family: 'Press Start 2P', cursive;
@@ -356,6 +358,8 @@ body, textarea, button {
 }
 
 .tab-content {
+    flex: 1;
+    overflow: hidden; /* Скрыть переполнение у родителя */
     background: #1a1a1a;
     padding: 15px;
     display: none;
@@ -453,6 +457,58 @@ body, textarea, button {
     margin-bottom: 10px;
 }
 
+.task-list {
+    max-height: 100%; /* Наследование высоты родителя */
+}
+
+#freelance {
+    max-height: 60vh; /* Ограничение по высоте */
+    overflow-y: auto; /* Вертикаальный скролл */
+    padding-right: 5px; /* Чтобы контент не заезжал под скролл */
+}
+
+#freelance::-webkit-scrollbar {
+    width: 10px;
+    background: #1a1a1a;
+}
+
+#freelance::-webkit-scrollbar-track {
+    border-radius: 3px;
+    background: rgba(0, 30, 0, 0.2);
+}
+
+#freelance::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border-radius: 5px;
+    border: 2px solid #1a1a1a;
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.5);
+}
+
+#freelance::-webkit-scrollbar-thumb:hover {
+    background: #0d0;
+}
+
+/* Для Firefox */
+#freelance {
+    scrollbar-width: thin;
+    scrollbar-color: #0f0 #1a1a1a;
+}
+
+/* Чтобы применить стили ко всем скроллбарам в окне браузера */
+#browser ::-webkit-scrollbar {
+    width: 10px;
+}
+
+#browser ::-webkit-scrollbar-track {
+    background: rgba(0, 30, 0, 0.2);
+}
+
+#browser ::-webkit-scrollbar-thumb {
+    background: #0f0;
+    border: 2px solid #1a1a1a;
+}
+
+
 .task:hover {
     transform: translateX(10px);
     background: rgba(0, 255, 0, 0.05);
@@ -531,6 +587,11 @@ body, textarea, button {
     font-size: 10px;
 }
 
+#browser {
+    height: 70vh; /* Задаёт высоту 70% от высоты экрана */
+    display: flex;
+    flex-direction: column; /* Чтобы внутренние элементы растягивались */
+}
 
 #console {
     height: 400px;
@@ -562,6 +623,7 @@ body, textarea, button {
     line-height: 1.4;
     color: #ddd;
     scroll-behavior: smooth;
+    max-height: 300px; /* Фиксированная высота для скролла */
 }
 
 /* Стили для скроллбара */

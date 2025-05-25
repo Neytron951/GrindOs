@@ -411,37 +411,36 @@ const TaskSystem = {
         let result = false;
 
         try {
-            if (task.required === 'output') {
-                // Проверка заданий с выводом (например: print(5))
-                const output = await Console.executeAndCapture(code);
-                result = task.testCases.some(tc =>
-                    output.trim() === tc.expectedOutput.trim()
-                );
-            } else if (task.required === 'function') {
+        if (task.required === 'output') {
+            // Логика для заданий с выводом
+            const output = await Console.executeAndCapture(code);
+            result = task.testCases.some(tc =>
+                output.trim() === tc.expectedOutput.trim()
+            );
+        } else if (task.required === 'function') {
+            // Универсальная проверка функций
             const sandbox = {
                 console: { log: () => {} },
                 print: (text) => Console.print(text, 'output')
             };
 
-            // 1. Выполняем код и получаем глобальный контекст
+            // Выполняем код и получаем контекст
             const executionContext = await Console.executeJavaScript(code, sandbox);
 
-            // 2. Проверяем наличие add как глобальной функции
-            if (typeof executionContext.add !== 'function') {
-                throw new Error(`
-                    Функция add не объявлена через function!
-                    Используйте: function add(a, b) { ... }
-                `);
+            // Проверяем наличие функции из задания
+            const targetFunction = task.testCases[0].args ?
+                executionContext[task.testCases[0].args[0]] :
+                executionContext[task.solution.match(/function (\w+)/)[1]];
+
+            if (typeof targetFunction !== 'function') {
+                throw new Error(`Функция ${task.funcName || 'не найдена'}`);
             }
 
-            // 3. Проверяем все тестовые случаи
+            // Проверяем тестовые случаи
             result = task.testCases.every(tc => {
-                const actual = executionContext.add(...tc.args);
+                const actual = targetFunction(...tc.args);
                 return actual === tc.expected;
             });
-
-            // 4. Отладочный вывод (можно удалить позже)
-            Console.print(`Проверка завершена. Результат: ${result}`, 'debug');
         }
     } catch (e) {
         Console.print(`Ошибка: ${e.message}`, 'error');
