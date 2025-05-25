@@ -4,7 +4,7 @@ const GameConfig = {
   enableSounds: true,
   startingRamCoins: 100,
   adReward: 50,
-  coreExchangeRate: 100, // 1 CORE = 100 RAM
+  coreExchangeRate: 10, // 1 CORE = 100 RAM
 
   // Настройки майнера
   miner: {
@@ -1362,7 +1362,9 @@ const Miner = {
     },
 
     convertWithAd() {
-        if (GameState.coreCoins < 1) {
+        const coreAmount = GameState.coreCoins;
+
+        if (coreAmount < 1) {
             Modal.open('Ошибка', 'Нужно минимум 1 CORE для обмена');
             GameState.playSound('error');
             return;
@@ -1370,15 +1372,14 @@ const Miner = {
 
         Modal.confirm(
             'Рекламный обмен',
-            `Посмотреть рекламу для получения 130 RAM за 1 CORE?`,
+            `Посмотреть рекламу для получения ${Math.floor(coreAmount * 13)} RAM за все ${coreAmount.toFixed(2)} CORE?`,
             () => {
-                // Эмуляция просмотра рекламы
                 this.showFakeAd(() => {
-                    const ramAmount = Math.floor(1 * GameConfig.coreExchangeRate * 1.3);
-                    GameState.coreCoins -= 1;
-                    Wallet.addCoins(ramAmount, "Рекламный обмен CORE → RAM");
+                    const ramAmount = Math.floor(coreAmount * GameConfig.coreExchangeRate * 1.3);
+                    GameState.coreCoins = 0;
+                    Wallet.addCoins(ramAmount, "Рекламный обмен CORE → RAM (x1.3)");
                     this.updateCoreDisplay();
-                    Modal.open('Успех!', `+${ramAmount} RAM получено!`);
+                    Modal.open('Успех!', `Конвертировано ${coreAmount.toFixed(2)} CORE → ${ramAmount} RAM!`);
                 });
             }
         );
@@ -1530,5 +1531,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
-
