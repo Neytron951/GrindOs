@@ -44,21 +44,6 @@ const GameConfig = {
     1500: { price: 100, amount: "1.5 CORE" }
   },
 
-  // Задания
-  tasks: {
-    1: {
-      description: "Напиши функцию add(a, b), которая возвращает a + b.",
-      solution: "function add(a, b) {\n  return a + b;\n}",
-      reward: 50,
-      completed: false
-    },
-    2: {
-      description: "Напиши функцию isEven(n), которая проверяет, чётное ли число.",
-      solution: "function isEven(n) {\n  return n % 2 === 0;\n}",
-      reward: 80,
-      completed: false
-    }
-  },
 
   // Доступные приложения
   startingApps: ['notepad', 'browser', 'wallet', 'console', 'miner'],
@@ -264,59 +249,67 @@ const Console = {
     },
 
     async executeJavaScript(code, customSandbox = {}) {
-        const sandbox = {
-            console: { log: this.print.bind(this) },
-            print: (text) => this.print(text, 'output'), // Вывод в игровую консоль
-            Math: {
-                abs: Math.abs, round: Math.round,
-                floor: Math.floor, ceil: Math.ceil,
-                max: Math.max, min: Math.min,
-                random: Math.random
-            },
-            Array: {
-                from: Array.from, isArray: Array.isArray,
-                prototype: { push: Array.prototype.push, pop: Array.prototype.pop }
-            },
-            ...customSandbox // Добавляем кастомные элементы
+      return new Promise((resolve, reject) => {
+        const worker = new Worker('js/sandbox-worker.js');
+        const id = Date.now();
+        let logs = [];
+
+        worker.onmessage = (e) => {
+          if (e.data.id === id) {
+            worker.terminate();
+            if (e.data.error) reject(new Error(e.data.error));
+            else resolve({
+              result: e.data.result,
+              logs // Сохраняем логи
+            });
+          } else if (e.data.type === 'log') {
+            logs.push(e.data.data); // Записываем логи
+            this.print(e.data.data, 'output');
+          }
         };
 
-        try {
-            // Добавляем явное объявление глобальной функции
-            const wrappedCode = `
-                // Важно: использовать var вместо let/const для глобальной видимости
-                ${code.replace(/^function add/g, 'var add = function')};
-                this.add = add; // Явно привязываем к глобальному контексту
-                return this;
-            `;
+        worker.postMessage({
+          id,
+          code,
+          sandbox: {
+            allowedGlobals: {
+              Math: ['abs', 'floor', 'ceil', 'random']
+            },
+            customSandbox: {} // Только простые объекты!
+          }
+        });
 
-            const result = await (new Function('sandbox', `
-                with(sandbox) {
-                    return (function() {
-                        ${wrappedCode}
-                    })();
-                }
-            `))(sandbox);
-
-            return result;
-        } catch (e) {
-            throw e;
-        }
+        setTimeout(() => {
+          worker.terminate();
+          reject(new Error('Timeout after 5 seconds'));
+        }, 5000);
+      });
     },
 
     async runScript(filename) {
         let finalFilename = filename.trim();
-        if (!finalFilename.endsWith('.gs')) {
-            finalFilename += '.gs';
-        }
+        if (!finalFilename.endsWith('.gs')) finalFilename += '.gs';
 
         if (!Notepad.files[finalFilename]) {
-            this.print(`Ошибка: Файл "${finalFilename}" не найден`, 'error');
+            this.print(`Файл "${finalFilename}" не найден`, 'error');
             return;
         }
 
         try {
             this.print(`> Запуск ${finalFilename}...`, 'system');
-            await this.executeJavaScript(Notepad.files[finalFilename]);
+
+            // Выполняем код и получаем логи
+            const executionResult = await this.executeJavaScript(
+                Notepad.files[finalFilename]
+            );
+
+            // Выводим логи в консоль игры
+            if (executionResult.logs) {
+                executionResult.logs.forEach(log =>
+                    this.print(log, 'output')
+                );
+            }
+
         } catch (e) {
             this.print(`GrindScript Error: ${e.message}`, 'error');
         }
@@ -353,16 +346,23 @@ const Console = {
 
 
 Console.executeAndCapture = async function(code) {
+    const logs = [];
     const originalPrint = this.print;
-    let output = '';
 
     this.print = (text, type) => {
-        if (type === 'output') output += text + '\n';
+        if (type === 'output') {
+            logs.push(text.toString().replace(/\s+/g, ' ').trim());
+        }
     };
 
-    await this.executeJavaScript(code);
+    try {
+        await this.executeJavaScript(code);
+    } catch (e) {
+        Console.print(`Ошибка выполнения: ${e.message}`, 'error');
+    }
+
     this.print = originalPrint;
-    return output;
+    return logs.join(' ');
 };
 
 
@@ -442,54 +442,75 @@ const TaskSystem = {
         const task = GameTasks[taskId];
         const code = Notepad.files[this.selectedFile];
         let result = false;
+        let errorMessage = '';
+        let logs = [];
+        let functionContext = {};
 
         try {
-        if (task.required === 'output') {
-            // Логика для заданий с выводом
-            const output = await Console.executeAndCapture(code);
-            result = task.testCases.some(tc =>
-                output.trim() === tc.expectedOutput.trim()
-            );
-        } else if (task.required === 'function') {
-            // Универсальная проверка функций
-            const sandbox = {
-                console: { log: () => {} },
-                print: (text) => Console.print(text, 'output')
-            };
+            // Выполняем код в песочнице и получаем результат
+            const executionResult = await Console.executeJavaScript(code);
+            logs = executionResult.logs || [];
+            functionContext = executionResult.result || {};
 
-            // Выполняем код и получаем контекст
-            const executionContext = await Console.executeJavaScript(code, sandbox);
+            // Выводим логи в игровую консоль
+            logs.forEach(log => Console.print(log, 'output'));
 
-            // Проверяем наличие функции из задания
-            const targetFunction = task.testCases[0].args ?
-                executionContext[task.testCases[0].args[0]] :
-                executionContext[task.solution.match(/function (\w+)/)[1]];
+            // Обработка разных типов заданий
+            if (task.required === 'output') {
+                const actualOutput = logs.join(' ')
+                    .replace(/\s+/g, ' ')
+                    .trim();
 
-            if (typeof targetFunction !== 'function') {
-                throw new Error(`Функция ${task.funcName || 'не найдена'}`);
+                result = task.testCases.some(tc => {
+                    const expected = tc.expectedOutput
+                        .replace(/\s+/g, ' ')
+                        .trim();
+                    return actualOutput === expected;
+                });
+            }
+            else if (task.required === 'function') {
+                const funcName = task.solution.match(/function (\w+)/)[1];
+
+                if (!functionContext[funcName]) {
+                    throw new Error(`Функция ${funcName} не найдена`);
+                }
+
+                result = task.testCases.every(tc => {
+                    try {
+                        const actual = functionContext[funcName](...tc.args);
+                        return actual === tc.expected;
+                    } catch (e) {
+                        errorMessage = e.message;
+                        return false;
+                    }
+                });
             }
 
-            // Проверяем тестовые случаи
-            result = task.testCases.every(tc => {
-                const actual = targetFunction(...tc.args);
-                return actual === tc.expected;
-            });
+        } catch (e) {
+            Console.print(`Ошибка выполнения: ${e.message}`, 'error');
+            errorMessage = e.message;
+            result = false;
+        } finally {
+            // Всегда очищаем консоль после проверки
+            Console.clear();
         }
-    } catch (e) {
-        Console.print(`Ошибка: ${e.message}`, 'error');
-        result = false;
-    }
 
-        // Обновляем статус игрока
+        // Обновление статуса игрока
         if (result) {
             GameState.reputation += 5;
             Wallet.addCoins(task.reward, `Задание ${taskId}`);
-            Modal.open('✅ Успех', `Задание выполнено!<br>+5 к репутации<br>+${task.reward} RAM`);
+            Modal.open('✅ Успех',
+                `Задание выполнено!<br>+5 к репутации<br>+${task.reward} RAM`);
         } else {
             GameState.reputation = Math.max(0, GameState.reputation - 3);
-            Modal.open('❌ Ошибка', 'Неверное решение! -3 к репутации');
+            const errorMsg = errorMessage
+                ? `Ошибка: ${errorMessage}`
+                : 'Решение не соответствует требованиям';
+            Modal.open('❌ Ошибка',
+                `${errorMsg}<br>-3 к репутации`);
         }
 
+        // Обновление интерфейса и сохранение
         this.updateLevel();
         GameState.save();
         updateReputationUI();
