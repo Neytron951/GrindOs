@@ -181,6 +181,8 @@ const Documentation = {
 // ===== КОНСОЛЬ =====
 const Console = {
     init() {
+
+        window.print = () => {}; // Блокируем браузерную печать
         document.getElementById('console-cmd').addEventListener('keydown', async (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -228,10 +230,10 @@ const Console = {
         }
     },
 
-    async executeJavaScript(code) {
+    async executeJavaScript(code, customSandbox = {}) {
         const sandbox = {
             console: { log: this.print.bind(this) },
-            print: (text) => this.print(text, 'output'),
+            print: (text) => this.print(text, 'output'), // Вывод в игровую консоль
             Math: {
                 abs: Math.abs, round: Math.round,
                 floor: Math.floor, ceil: Math.ceil,
@@ -241,20 +243,28 @@ const Console = {
             Array: {
                 from: Array.from, isArray: Array.isArray,
                 prototype: { push: Array.prototype.push, pop: Array.prototype.pop }
-            }
+            },
+            ...customSandbox // Добавляем кастомные элементы
         };
 
         try {
-            const wrappedCode = `(async () => {
-                with(sandbox) {
-                    ${code}
-                }
-            })()`;
+            // Добавляем явное объявление глобальной функции
+            const wrappedCode = `
+                // Важно: использовать var вместо let/const для глобальной видимости
+                ${code.replace(/^function add/g, 'var add = function')};
+                this.add = add; // Явно привязываем к глобальному контексту
+                return this;
+            `;
 
-            const result = await (new Function('sandbox', wrappedCode))(sandbox);
-            if (result !== undefined) {
-                this.print(String(result), 'output');
-            }
+            const result = await (new Function('sandbox', `
+                with(sandbox) {
+                    return (function() {
+                        ${wrappedCode}
+                    })();
+                }
+            `))(sandbox);
+
+            return result;
         } catch (e) {
             throw e;
         }
@@ -396,52 +406,64 @@ const TaskSystem = {
     },
 
     async verifySolution(taskId) {
-      const task = GameTasks[taskId];
-      const code = Notepad.files[this.selectedFile];
-      let result = false;
+        const task = GameTasks[taskId];
+        const code = Notepad.files[this.selectedFile];
+        let result = false;
 
-      try {
-          if (task.required === 'output') {
-              // Для заданий с проверкой вывода
-              const output = await Console.executeAndCapture(code);
-              result = task.testCases.some(tc =>
-                  output.trim() === tc.expectedOutput.trim()
-              );
-          } else if (task.required === 'function') {
-              // Для заданий с проверкой функций
-              const sandbox = {
-                  console: { log: () => {} },
-                  add: undefined // Очищаем предыдущие значения
-              };
+        try {
+            if (task.required === 'output') {
+                // Проверка заданий с выводом (например: print(5))
+                const output = await Console.executeAndCapture(code);
+                result = task.testCases.some(tc =>
+                    output.trim() === tc.expectedOutput.trim()
+                );
+            } else if (task.required === 'function') {
+            const sandbox = {
+                console: { log: () => {} },
+                print: (text) => Console.print(text, 'output')
+            };
 
-              // Добавляем возврат функции для тестирования
-              const wrappedCode = `${code}\n; add;`;
+            // 1. Выполняем код и получаем глобальный контекст
+            const executionContext = await Console.executeJavaScript(code, sandbox);
 
-              // Выполняем код и получаем функцию
-              const userFunc = await Console.executeJavaScript(wrappedCode, sandbox);
+            // 2. Проверяем наличие add как глобальной функции
+            if (typeof executionContext.add !== 'function') {
+                throw new Error(`
+                    Функция add не объявлена через function!
+                    Используйте: function add(a, b) { ... }
+                `);
+            }
 
-              // Проверяем все тестовые случаи
-              result = task.testCases.every(tc =>
-                  userFunc(...tc.args) === tc.expected
-              );
-          }
-      } catch (e) {
-          result = false;
-      }
+            // 3. Проверяем все тестовые случаи
+            result = task.testCases.every(tc => {
+                const actual = executionContext.add(...tc.args);
+                return actual === tc.expected;
+            });
 
-      if (result) {
-          GameState.reputation += 5;
-          Wallet.addCoins(task.reward, `Задание ${taskId}`);
-          Modal.open('✅ Успех', `Задание выполнено!<br>+5 к репутации<br>+${task.reward} RAM`);
-      } else {
-          GameState.reputation = Math.max(0, GameState.reputation - 3);
-          Modal.open('❌ Ошибка', 'Неверное решение! -3 к репутации');
-      }
+            // 4. Отладочный вывод (можно удалить позже)
+            Console.print(`Проверка завершена. Результат: ${result}`, 'debug');
+        }
+    } catch (e) {
+        Console.print(`Ошибка: ${e.message}`, 'error');
+        result = false;
+    }
 
-      this.updateLevel();
-      GameState.save();
-      updateReputationUI();
-  },
+        // Обновляем статус игрока
+        if (result) {
+            GameState.reputation += 5;
+            Wallet.addCoins(task.reward, `Задание ${taskId}`);
+            Modal.open('✅ Успех', `Задание выполнено!<br>+5 к репутации<br>+${task.reward} RAM`);
+        } else {
+            GameState.reputation = Math.max(0, GameState.reputation - 3);
+            Modal.open('❌ Ошибка', 'Неверное решение! -3 к репутации');
+        }
+
+        this.updateLevel();
+        GameState.save();
+        updateReputationUI();
+
+        return result;
+    },
 
     updateLevel() {
         const reputation = GameState.reputation;
