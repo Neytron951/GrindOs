@@ -248,42 +248,45 @@ const Console = {
         }
     },
 
-    async executeJavaScript(code, customSandbox = {}) {
-      return new Promise((resolve, reject) => {
-        const worker = new Worker('js/sandbox-worker.js');
-        const id = Date.now();
-        let logs = [];
+    async executeJavaScript(code, options = {}) {
+        return new Promise((resolve, reject) => {
+            const worker = new Worker('js/sandbox-worker.js');
+            const id = Date.now();
+            let logs = [];
 
-        worker.onmessage = (e) => {
-          if (e.data.id === id) {
-            worker.terminate();
-            if (e.data.error) reject(new Error(e.data.error));
-            else resolve({
-              result: e.data.result,
-              logs // Сохраняем логи
+            worker.onmessage = (e) => {
+                if (e.data.id === id) {
+                    worker.terminate();
+                    resolve({
+                        result: e.data.result,
+                        logs: options.realtime ? [] : logs // Не возвращаем логи при realtime
+                    });
+                } else if (e.data.type === 'log') {
+                    const message = e.data.data;
+                    logs.push(message);
+
+                    // Выводим только если включен realtime и не silent
+                    if (options.realtime && !options.silent) {
+                        this.print(message, 'output');
+                    }
+                }
+            };
+
+            worker.postMessage({
+                id,
+                code,
+                sandbox: {
+                    allowedGlobals: {
+                        Math: ['abs', 'floor', 'ceil', 'random']
+                    }
+                }
             });
-          } else if (e.data.type === 'log') {
-            logs.push(e.data.data); // Записываем логи
-            this.print(e.data.data, 'output');
-          }
-        };
 
-        worker.postMessage({
-          id,
-          code,
-          sandbox: {
-            allowedGlobals: {
-              Math: ['abs', 'floor', 'ceil', 'random']
-            },
-            customSandbox: {} // Только простые объекты!
-          }
+            setTimeout(() => {
+                worker.terminate();
+                reject(new Error('Timeout after 5 seconds'));
+            }, 5000);
         });
-
-        setTimeout(() => {
-          worker.terminate();
-          reject(new Error('Timeout after 5 seconds'));
-        }, 5000);
-      });
     },
 
     async runScript(filename) {
@@ -298,17 +301,10 @@ const Console = {
         try {
             this.print(`> Запуск ${finalFilename}...`, 'system');
 
-            // Выполняем код и получаем логи
-            const executionResult = await this.executeJavaScript(
-                Notepad.files[finalFilename]
-            );
-
-            // Выводим логи в консоль игры
-            if (executionResult.logs) {
-                executionResult.logs.forEach(log =>
-                    this.print(log, 'output')
-                );
-            }
+            // Запускаем с выводом в реальном времени
+            await this.executeJavaScript(Notepad.files[finalFilename], {
+                realtime: true
+            });
 
         } catch (e) {
             this.print(`GrindScript Error: ${e.message}`, 'error');
@@ -453,7 +449,7 @@ const TaskSystem = {
             functionContext = executionResult.result || {};
 
             // Выводим логи в игровую консоль
-            logs.forEach(log => Console.print(log, 'output'));
+            //logs.forEach(log => Console.print(log, 'output'));
 
             // Обработка разных типов заданий
             if (task.required === 'output') {
