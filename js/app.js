@@ -113,8 +113,10 @@ const GameState = {
             const saved = localStorage.getItem('codeGrindSave');
             if (saved) {
                 const data = JSON.parse(saved);
-                this.coreCoins = data.coreCoins || 0;
-                // ... остальная логика загрузки
+                this.reputation = data.reputation || 0;
+                this.level = data.level || 1;
+                this.unlockedDifficulties = data.unlockedDifficulties || [1];
+                // ... остальная загрузка ...
             }
         } catch (e) {
             console.log('Загрузка недоступна:', e);
@@ -248,44 +250,66 @@ const Console = {
         }
     },
 
-    async executeJavaScript(code, options = {}) {
-        return new Promise((resolve, reject) => {
+    executeJavaScript(code, options = {}) {
+        return new Promise((resolve) => {
             const worker = new Worker('js/sandbox-worker.js');
             const id = Date.now();
             let logs = [];
+            let errors = [];
+
+            // Таймаут по умолчанию 15 секунд, можно переопределить
+            const timeout = options.timeout || 15000;
 
             worker.onmessage = (e) => {
-                if (e.data.id === id) {
-                    worker.terminate();
+                if (e.data.id !== id) return;
+
+                // Обработка логов в реальном времени
+                if (e.data.type === 'log' && options.realtime && !options.silent) {
+                    this.print(e.data.data, 'output');
+                }
+
+                // Основной результат выполнения
+                if (e.data.result !== undefined || e.data.error) {
                     resolve({
                         result: e.data.result,
-                        logs: options.realtime ? [] : logs // Не возвращаем логи при realtime
+                        logs: options.realtime ? [] : (e.data.logs || logs),
+                        context: e.data.context || {},
+                        errors: e.data.errors || errors,
+                        executionTime: e.data.executionTime
                     });
-                } else if (e.data.type === 'log') {
-                    const message = e.data.data;
-                    logs.push(message);
-
-                    // Выводим только если включен realtime и не silent
-                    if (options.realtime && !options.silent) {
-                        this.print(message, 'output');
-                    }
+                    worker.terminate();
                 }
+
+                // Обработка логов и ошибок
+                if (e.data.logs) logs = [...logs, ...e.data.logs];
+                if (e.data.errors) errors = [...errors, ...e.data.errors];
             };
 
+            // Отправка кода в воркер
             worker.postMessage({
                 id,
                 code,
                 sandbox: {
                     allowedGlobals: {
-                        Math: ['abs', 'floor', 'ceil', 'random']
+                        Math: ['abs', 'floor', 'ceil', 'round', 'random'],
+                        Array: ['isArray', 'from'],
+                        JSON: ['parse', 'stringify'],
+                        ...(options.allowedGlobals || {})
                     }
-                }
+                },
+                timeout,
+                returnContext: options.returnContext || false
             });
 
+            // Автоматический таймаут
             setTimeout(() => {
                 worker.terminate();
-                reject(new Error('Timeout after 5 seconds'));
-            }, 5000);
+                resolve({
+                    error: `Execution timeout after ${timeout}ms`,
+                    logs,
+                    errors: [...errors, `Timeout after ${timeout}ms`]
+                });
+            }, timeout + 100); // Небольшой запас
         });
     },
 
@@ -436,113 +460,282 @@ const TaskSystem = {
 
     async verifySolution(taskId) {
         const task = GameTasks[taskId];
+        if (!task || !this.selectedFile) {
+            Modal.open('Ошибка', 'Задание или файл не выбраны');
+            return false;
+        }
+
         const code = Notepad.files[this.selectedFile];
         let result = false;
-        let errorMessage = '';
-        let logs = [];
-        let functionContext = {};
+        let errorDetails = [];
+        let executionStats = {
+            time: 0,
+            memory: 0,
+            steps: 0
+        };
 
         try {
-            // Выполняем код в песочнице и получаем результат
-            const executionResult = await Console.executeJavaScript(code);
-            logs = executionResult.logs || [];
-            functionContext = executionResult.result || {};
+            Console.print(`Проверка задания #${taskId}...`, 'system');
 
-            // Выводим логи в игровую консоль
-            //logs.forEach(log => Console.print(log, 'output'));
+            // 1. Выполнение кода с увеличенным таймаутом для сложных заданий
+            const startTime = performance.now();
+            const { logs, context, errors } = await Console.executeJavaScript(code, {
+                silent: true,
+                returnContext: true,
+                timeout: task.difficulty > 5 ? 30000 : 15000 // 30 сек для сложных заданий
+            });
+            executionStats.time = performance.now() - startTime;
 
-            // Обработка разных типов заданий
-            if (task.required === 'output') {
-                const actualOutput = logs.join(' ')
-                    .replace(/\s+/g, ' ')
-                    .trim();
-
-                result = task.testCases.some(tc => {
-                    const expected = tc.expectedOutput
-                        .replace(/\s+/g, ' ')
-                        .trim();
-                    return actualOutput === expected;
-                });
+            // 2. Логирование статистики
+            Console.print(`Выполнение заняло ${executionStats.time.toFixed(2)}мс`, 'system');
+            if (errors.length > 0) {
+                Console.print(`Обнаружены ошибки: ${errors.join('; ')}`, 'error');
             }
-            else if (task.required === 'function') {
-                const funcName = task.solution.match(/function (\w+)/)[1];
 
-                if (!functionContext[funcName]) {
-                    throw new Error(`Функция ${funcName} не найдена`);
-                }
+            // 3. Проверка по типу задания
+            switch(task.type) {
+                case 'output':
+                    result = this._validateOutput(task, logs);
+                    break;
 
-                result = task.testCases.every(tc => {
-                    try {
-                        const actual = functionContext[funcName](...tc.args);
-                        return actual === tc.expected;
-                    } catch (e) {
-                        errorMessage = e.message;
-                        return false;
-                    }
-                });
+                case 'function':
+                    result = await this._validateFunction(task, context);
+                    break;
+
+                case 'error':
+                    result = this._validateError(task, errors);
+                    break;
+
+                case 'algorithm': // Новый тип для сложных алгоритмов
+                    result = this._validateAlgorithm(task, logs, context);
+                    break;
+
+                default:
+                    throw new Error(`Неизвестный тип задания: ${task.type}`);
+            }
+
+            // 4. Проверка дополнительных требований (если есть)
+            if (task.requirements) {
+                result = result && this._checkRequirements(task, code);
             }
 
         } catch (e) {
-            Console.print(`Ошибка выполнения: ${e.message}`, 'error');
-            errorMessage = e.message;
-            result = false;
+            errorDetails.push(`Системная ошибка: ${e.message}`);
+            Console.print(`Ошибка проверки: ${e.message}`, 'error');
         } finally {
-            // Всегда очищаем консоль после проверки
+            // 5. Всегда очищаем консоль и обновляем UI
             Console.clear();
+            document.getElementById('submit-task-btn').style.display = 'none';
         }
 
-        // Обновление статуса игрока
-        if (result) {
-            GameState.reputation += 5;
+        // 6. Показ результата
+        const success = result && errorDetails.length === 0;
+        this._showResultModal(task, success, errorDetails, executionStats);
+
+        // 7. Награждение и разблокировка уровней
+        if (success) {
             Wallet.addCoins(task.reward, `Задание ${taskId}`);
-            Modal.open('✅ Успех',
-                `Задание выполнено!<br>+5 к репутации<br>+${task.reward} RAM`);
-        } else {
-            GameState.reputation = Math.max(0, GameState.reputation - 3);
-            const errorMsg = errorMessage
-                ? `Ошибка: ${errorMessage}`
-                : 'Решение не соответствует требованиям';
-            Modal.open('❌ Ошибка',
-                `${errorMsg}<br>-3 к репутации`);
+            GameState.reputation += task.difficulty * 2;
+            this._unlockNextLevel(); // Обновляем систему уровней
+            updateReputationUI();
         }
 
-        // Обновление интерфейса и сохранение
-        this.updateLevel();
-        GameState.save();
-        updateReputationUI();
-
-        return result;
+        return success;
     },
 
-    updateLevel() {
-        const reputation = GameState.reputation;
-        const newLevel = Math.min(Math.floor(reputation / 20) + 1, 10);
+    // Вспомогательные методы внутри TaskSystem
+    _validateOutput(task, logs) {
+        const actualOutput = logs.join(' ').trim();
+
+        return task.testCases.some(tc => {
+            const expected = tc.expectedOutput.toString();
+
+            // Если требуется точное совпадение
+            if (tc.strictMatch) {
+                return actualOutput === expected;
+            }
+
+            return this._smartCompare(actualOutput, expected);
+        });
+    },
+
+
+    _smartCompare(actual, expected) {
+        // Точное совпадение
+        if (actual === expected) return true;
+
+        // Нормализация строк
+        actual = actual.toLowerCase().replace(/\s+/g, ' ').trim();
+        expected = expected.toLowerCase().replace(/\s+/g, ' ').trim();
+
+        // Для чисел сравниваем как числа
+        if (!isNaN(actual)) {
+            return parseFloat(actual) === parseFloat(expected);
+        }
+
+        // Для массивов/объектов
+        if (actual.startsWith('[') || actual.startsWith('{')) {
+            try {
+                const actualObj = JSON.parse(actual);
+                const expectedObj = JSON.parse(expected);
+                return this._deepEqual(actualObj, expectedObj);
+            } catch {
+                return false;
+            }
+        }
+
+        // Частичное совпадение для строк
+        return actual.includes(expected) || expected.includes(actual);
+    },
+
+
+    _unlockNextLevel() {
+        const REPUTATION_PER_LEVEL = 20;
+        const newLevel = Math.floor(GameState.reputation / REPUTATION_PER_LEVEL) + 1;
 
         if (newLevel > GameState.level) {
             GameState.level = newLevel;
 
             // Разблокируем новые уровни сложности
-            if (!GameState.unlockedDifficulties.includes(newLevel)) {
-                GameState.unlockedDifficulties.push(newLevel);
+            const maxDifficulty = Math.min(newLevel, 7); // Макс. сложность 7
+            for (let i = 1; i <= maxDifficulty; i++) {
+                if (!GameState.unlockedDifficulties.includes(i)) {
+                    GameState.unlockedDifficulties.push(i);
+                }
             }
 
-            Modal.open('🎉 Уровень повышен!', `Новый уровень: ${newLevel}`);
-            GameState.save(); // Сохраняем изменения
+            GameState.save();
+            updateReputationUI();
+            Modal.open('Новый уровень!', `Вы достигли уровня ${newLevel}!`);
+        }
+    },
+
+
+
+    _fuzzyCompare(actual, expected) {
+        // Простая проверка на точное совпадение
+        if (actual === expected) return true;
+
+        // Нормализация строк (удаление лишних пробелов, приведение к нижнему регистру)
+        const normalize = str => str.toLowerCase().replace(/\s+/g, ' ').trim();
+
+        // Проверка на частичное совпадение
+        return normalize(actual).includes(normalize(expected)) ||
+               normalize(expected).includes(normalize(actual));
+    },
+
+    async _validateFunction(task, context) {
+        try {
+            const func = context[task.functionName];
+            if (!func || typeof func !== 'function') {
+                throw new Error(`Функция ${task.functionName} не найдена`);
+            }
+
+            // Проверка всех тестовых случаев
+            const testResults = await Promise.all(
+                task.testCases.map(async tc => {
+                    try {
+                        const result = await func(...tc.args);
+                        return this._deepEqual(result, tc.expected);
+                    } catch (e) {
+                        throw new Error(`Тест-кейс ${tc.name}: ${e.message}`);
+                    }
+                })
+            );
+
+            return testResults.every(Boolean);
+        } catch (e) {
+            throw new Error(`Ошибка валидации функции: ${e.message}`);
+        }
+    },
+
+    _deepEqual(a, b) {
+        if (a === b) return true;
+        if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false;
+
+        const keysA = Object.keys(a);
+        const keysB = Object.keys(b);
+
+        if (keysA.length !== keysB.length) return false;
+
+        for (const key of keysA) {
+            if (!keysB.includes(key)) return false;
+            if (!this._deepEqual(a[key], b[key])) return false;
         }
 
-        updateReputationUI();
+        return true;
     },
+
+
+    _validateError(task, errors) {
+        return errors.some(err =>
+            err.message.includes(task.expectedError) ||
+            task.expectedError.some?.(e => err.message.includes(e))
+        );
+    },
+
+    _validateAlgorithm(task, logs, context) {
+        // Специальная проверка для алгоритмических задач
+        const validationFunc = new Function(
+            'logs', 'context', 'task',
+            `return (${task.validationFunction})(logs, context, task);`
+        );
+
+        return validationFunc(logs, context, task);
+    },
+
+    _checkRequirements(task, code) {
+        // Проверка дополнительных требований (например, запрет определенных конструкций)
+        if (task.requirements?.forbid) {
+            const forbiddenPattern = new RegExp(task.requirements.forbid.join('|'), 'g');
+            if (forbiddenPattern.test(code)) {
+                throw new Error(`Нарушены требования: запрещено использовать ${task.requirements.forbid.join(', ')}`);
+            }
+        }
+        return true;
+    },
+
+    _showResultModal(task, success, errors, stats) {
+        const title = success ? '✅ Задание выполнено!' : '❌ Ошибка выполнения';
+        const html = `
+            <div class="task-result">
+                <h3>${task.description}</h3>
+                ${!success ? `
+                    <div class="errors">
+                        ${errors.map(e => `<p>${e}</p>`).join('')}
+                    </div>
+                ` : ''}
+                <div class="stats">
+                    <p>Время выполнения: ${stats?.time.toFixed(2)}мс</p>
+                    ${task.hint && !success ? `<div class="hint">💡 Подсказка: ${task.hint}</div>` : ''}
+                </div>
+                <div class="reward">Награда: ${success ? '+' : '±'}${task.reward} RAM</div>
+            </div>
+        `;
+
+        Modal.open(title, html);
+        GameState.playSound(success ? 'complete' : 'error');
+    }
 
 };
 
 function updateReputationUI() {
     const levelElement = document.getElementById('player-level');
     const repElement = document.getElementById('player-rep');
+    const progressElement = document.getElementById('rep-progress');
 
     if (levelElement) levelElement.textContent = GameState.level;
     if (repElement) repElement.textContent = GameState.reputation;
 
-    // Принудительное обновление списка заданий
+    // Прогресс до следующего уровня
+    if (progressElement) {
+        const REPUTATION_PER_LEVEL = 20;
+        const currentLevelRep = (GameState.reputation % REPUTATION_PER_LEVEL);
+        const progressPercent = (currentLevelRep / REPUTATION_PER_LEVEL) * 100;
+        progressElement.style.width = `${progressPercent}%`;
+    }
+
+    // Обновляем видимость заданий
     document.querySelectorAll('.task').forEach(task => {
         const taskId = task.dataset.taskId;
         const difficulty = GameTasks[taskId].difficulty;
